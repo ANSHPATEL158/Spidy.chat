@@ -1,0 +1,829 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* =========================================
+   RESET
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: #000;
+    color: #fff;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+}
+
+
+/* =========================================
+   VARIABLES
+========================================= */
+
+:root {
+    --black: #000000;
+    --dark: #050509;
+    --pink: #ff00d9;
+    --purple: #8a2be2;
+    --cyan: #00eaff;
+    --blue: #006cff;
+    --green: #00ff66;
+    --yellow: #ffe600;
+    --white: #ffffff;
+    --muted: #85899b;
+}
+
+
+/* =========================================
+   COMMON
+========================================= */
+
+.hidden {
+    display: none !important;
+}
+
+button,
+input {
+    font-family: "Poppins", sans-serif;
+}
+
+
+/* =========================================
+   LOGIN SCREEN
+========================================= */
+
+#loginScreen {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: radial-gradient( circle at center, rgba(120, 0, 255, 0.18), transparent 40%), #000;
+}
+
+#loginScreen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("/spider-theme.png") center / 600px no-repeat;
+    opacity: 0.12;
+    pointer-events: none;
+}
+
+.login-box {
+    width: 410px;
+    max-width: 90%;
+    padding: 40px 35px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    background: rgba(5, 5, 12, 0.94);
+    border: 1px solid var(--pink);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255, 0, 217, 0.25), 0 0 50px rgba(0, 234, 255, 0.08);
+}
+
+.login-logo {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: url("/spider-theme.png") center / cover;
+    border: 2px solid var(--pink);
+    box-shadow: 0 0 15px var(--pink), 0 0 30px rgba(0, 234, 255, 0.3);
+}
+
+.login-box h1 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 32px;
+    letter-spacing: 2px;
+    background: linear-gradient( 90deg, var(--cyan), #ffffff, var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.login-box p {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-bottom: 25px;
+}
+
+#usernameInput {
+    width: 100%;
+    padding: 14px 16px;
+    color: white;
+    background: #05050c;
+    border: 1px solid rgba(0, 234, 255, 0.45);
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+}
+
+#usernameInput:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 15px rgba(255, 0, 217, 0.25);
+}
+
+#joinButton {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 700;
+    background: linear-gradient( 90deg, #6200ff, #ff00d9, #006cff);
+    box-shadow: 0 0 18px rgba(255, 0, 217, 0.3);
+    transition: 0.2s;
+}
+
+#joinButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(255, 0, 217, 0.55);
+}
+
+
+/* =========================================
+   CHAT SCREEN
+========================================= */
+
+#chatScreen {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: linear-gradient( rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.90)), url("/spider-theme.png") center / cover no-repeat;
+    background-attachment: fixed;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.chat-header {
+    height: 75px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    background: rgba(0, 0, 5, 0.94);
+    border-bottom: 1px solid rgba(0, 234, 255, 0.4);
+    position: relative;
+    z-index: 10;
+}
+
+.chat-header::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient( 90deg, var(--pink), var(--purple), var(--cyan), var(--blue), var(--pink));
+    box-shadow: 0 0 12px var(--cyan);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: url("/spider-theme.png") center / cover;
+    border: 1px solid var(--pink);
+    box-shadow: 0 0 12px var(--pink);
+}
+
+.brand-text h1 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    background: linear-gradient( 90deg, #ffffff, var(--cyan), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-text span {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 3px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+#connectionStatus {
+    color: var(--green);
+    font-size: 13px;
+    text-shadow: 0 0 8px var(--green);
+}
+
+#logoutButton {
+    padding: 9px 17px;
+    color: white;
+    background: transparent;
+    border: 1px solid var(--pink);
+    border-radius: 9px;
+    transition: 0.2s;
+}
+
+#logoutButton:hover {
+    background: rgba(255, 0, 217, 0.12);
+    box-shadow: 0 0 15px rgba(255, 0, 217, 0.45);
+}
+
+
+/* =========================================
+   MAIN LAYOUT
+========================================= */
+
+.chat-layout {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr) 280px;
+    gap: 10px;
+    padding: 10px;
+}
+
+
+/* =========================================
+   LEFT SIDEBAR
+========================================= */
+
+.left-sidebar {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    background: rgba(2, 2, 8, 0.92);
+    border: 1px solid rgba(255, 0, 217, 0.35);
+    border-radius: 14px;
+    box-shadow: inset 0 0 25px rgba(255, 0, 217, 0.03);
+}
+
+.left-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.left-sidebar::-webkit-scrollbar-thumb {
+    background: linear-gradient( var(--pink), var(--cyan));
+    border-radius: 10px;
+}
+
+.side-section {
+    margin-bottom: 25px;
+}
+
+.side-section h3,
+.right-panel h3 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 12px;
+    color: var(--pink);
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(255, 0, 217, 0.5);
+}
+
+
+/* =========================================
+   ROOM
+========================================= */
+
+.room-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 11px;
+    background: linear-gradient( 90deg, rgba(255, 0, 217, 0.13), rgba(0, 234, 255, 0.04));
+    border: 1px solid rgba(255, 0, 217, 0.55);
+    box-shadow: inset 3px 0 var(--pink);
+    margin-bottom: 18px;
+}
+
+.room-icon {
+    font-size: 21px;
+}
+
+.room-info {
+    flex: 1;
+}
+
+.room-info strong {
+    display: block;
+    font-size: 13px;
+}
+
+.room-info small {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.room-online {
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 9px var(--green);
+}
+
+
+/* =========================================
+   USERS
+========================================= */
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+}
+
+.user-item:hover {
+    background: rgba(255, 0, 217, 0.07);
+    border-radius: 7px;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+}
+
+.user-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    color: #dce3ff;
+}
+
+.rank-badge {
+    padding: 2px 7px;
+    border: 1px solid var(--blue);
+    border-radius: 20px;
+    color: #6ea4ff;
+    font-size: 8px;
+    white-space: nowrap;
+}
+
+.rank-owner {
+    color: var(--yellow);
+    border-color: var(--yellow);
+    box-shadow: 0 0 6px rgba(255, 230, 0, 0.2);
+}
+
+.rank-admin {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+.rank-mod {
+    color: #d15cff;
+    border-color: #d15cff;
+}
+
+
+/* =========================================
+   CHAT CENTER
+========================================= */
+
+.chat-center {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0, 0, 5, 0.78);
+    border: 1px solid rgba(0, 234, 255, 0.35);
+    border-radius: 14px;
+}
+
+
+/* SPIDER WATERMARK */
+
+.chat-center::before {
+    content: "";
+    position: absolute;
+    width: 580px;
+    height: 580px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: url("/spider-theme.png") center / contain no-repeat;
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+}
+
+
+/* =========================================
+   ROOM HEADER
+========================================= */
+
+.room-header {
+    height: 65px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    position: relative;
+    z-index: 2;
+    background: rgba(0, 0, 5, 0.9);
+    border-bottom: 1px solid rgba(0, 234, 255, 0.28);
+}
+
+.room-header-icon {
+    font-size: 23px;
+}
+
+.room-header h2 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 16px;
+}
+
+.room-header p {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+
+/* =========================================
+   MESSAGES
+========================================= */
+
+.messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: linear-gradient( var(--pink), var(--cyan));
+    border-radius: 10px;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.message-avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: url("/spider-theme.png") center / cover;
+    border: 1px solid var(--pink);
+    box-shadow: 0 0 8px rgba(255, 0, 217, 0.3);
+}
+
+.message-content {
+    max-width: 80%;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+.message-username {
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.message-time {
+    color: #666b7c;
+    font-size: 8px;
+}
+
+.message-text {
+    color: #dce0f0;
+    font-size: 12px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+
+/* =========================================
+   SYSTEM MESSAGE
+========================================= */
+
+.system-message {
+    width: fit-content;
+    margin: 10px auto 17px;
+    padding: 7px 13px;
+    color: #9eefff;
+    background: rgba(0, 234, 255, 0.05);
+    border: 1px solid rgba(0, 234, 255, 0.4);
+    border-radius: 20px;
+    font-size: 10px;
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 0 10px rgba(0, 234, 255, 0.08);
+}
+
+
+/* =========================================
+   INPUT
+========================================= */
+
+.message-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 13px;
+    position: relative;
+    z-index: 5;
+    background: rgba(0, 0, 5, 0.95);
+    border-top: 1px solid rgba(255, 0, 217, 0.25);
+}
+
+#messageInput {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 15px;
+    color: white;
+    background: #05050c;
+    border: 1px solid rgba(255, 0, 217, 0.65);
+    border-radius: 11px;
+    outline: none;
+    font-size: 12px;
+}
+
+#messageInput:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0, 234, 255, 0.2);
+}
+
+#sendButton {
+    width: 58px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 21px;
+    background: linear-gradient( 135deg, var(--purple), var(--blue), var(--cyan));
+    box-shadow: 0 0 15px rgba(0, 234, 255, 0.4);
+    transition: 0.2s;
+}
+
+#sendButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 234, 255, 0.65);
+}
+
+
+/* =========================================
+   RIGHT SIDEBAR
+========================================= */
+
+.right-sidebar {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.right-panel {
+    min-height: 0;
+    padding: 15px;
+    overflow-y: auto;
+    background: rgba(2, 2, 8, 0.92);
+    border: 1px solid rgba(138, 43, 226, 0.45);
+    border-radius: 14px;
+}
+
+.right-panel:first-child {
+    flex: 1;
+}
+
+.staff-panel {
+    flex: 0 0 170px;
+}
+
+
+/* =========================================
+   VIBES PANEL
+========================================= */
+
+.vibes-panel {
+    height: 145px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(2, 2, 8, 0.9);
+    border: 1px solid rgba(255, 0, 217, 0.35);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.vibes-spider {
+    width: 95px;
+    height: 95px;
+    flex-shrink: 0;
+    background: url("/spider-theme.png") center / contain no-repeat;
+}
+
+.vibes-text {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-family: "Orbitron", sans-serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.vibes-text span:nth-child(1) {
+    color: var(--cyan);
+}
+
+.vibes-text span:nth-child(2) {
+    color: var(--pink);
+}
+
+.vibes-text span:nth-child(3) {
+    color: #00ffd5;
+}
+
+
+/* =========================================
+   PRIVATE CHAT
+========================================= */
+
+#privateChatModal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.private-chat-box {
+    width: 430px;
+    max-width: 90vw;
+    height: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: #05050c;
+    border: 1px solid var(--pink);
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(255, 0, 217, 0.3);
+    overflow: hidden;
+}
+
+.private-header {
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(255, 0, 217, 0.3);
+}
+
+#privateUsername {
+    color: var(--cyan);
+    font-family: "Orbitron", sans-serif;
+    font-size: 12px;
+}
+
+#closePrivateChat {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+}
+
+#privateMessages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.private-message {
+    padding: 9px 11px;
+    margin-bottom: 8px;
+    background: rgba(255, 0, 217, 0.07);
+    border: 1px solid rgba(255, 0, 217, 0.15);
+    border-radius: 9px;
+    font-size: 11px;
+}
+
+.private-input {
+    display: flex;
+    gap: 8px;
+    padding: 11px;
+    border-top: 1px solid rgba(0, 234, 255, 0.25);
+}
+
+#privateMessageInput {
+    flex: 1;
+    padding: 11px;
+    color: white;
+    background: #020208;
+    border: 1px solid rgba(0, 234, 255, 0.4);
+    border-radius: 9px;
+    outline: none;
+}
+
+#privateSendButton {
+    width: 48px;
+    border: none;
+    border-radius: 9px;
+    color: white;
+    background: linear-gradient( 135deg, var(--pink), var(--purple));
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 1050px) {
+    .chat-layout {
+        grid-template-columns: 210px minmax(0, 1fr);
+    }
+    .right-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .chat-header {
+        height: 65px;
+        padding: 0 12px;
+    }
+    .brand-logo {
+        width: 40px;
+        height: 40px;
+    }
+    .brand-text h1 {
+        font-size: 17px;
+    }
+    .brand-text span {
+        display: none;
+    }
+    #connectionStatus {
+        display: none;
+    }
+    .chat-layout {
+        display: block;
+        padding: 5px;
+    }
+    .left-sidebar {
+        display: none;
+    }
+    .chat-center {
+        height: calc(100vh - 75px);
+    }
+    .message-content {
+        max-width: 85%;
+    }
+}
