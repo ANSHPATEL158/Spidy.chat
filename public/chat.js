@@ -50,12 +50,12 @@ const closePrivateChat =
 let username = '';
 let privateChatUser = '';
 
-const OWNER_USERNAME = "Spidy 007";
+const OWNER_USERNAME = 'Spidy 007';
 
 function normalizeUsername(name) {
-    return String(name || "")
+    return String(name || '')
         .trim()
-        .replace(/\s+/g, " ")
+        .replace(/\s+/g, ' ')
         .toLowerCase();
 }
 
@@ -256,33 +256,42 @@ function sendMessage() {
     }
 
     // ===============================
-    // /CLEAR
+    // /CLEAR COMMAND
     // ===============================
 
-    if (
-        normalizeUsername(username) !==
-        normalizeUsername(OWNER_USERNAME)
-    ) {
-        addSystemMessage(
-            "Only the Owner can clear the room."
-        );
+    if (message.toLowerCase() === "/clear") {
+
+        if (
+            normalizeUsername(username) !==
+            normalizeUsername(OWNER_USERNAME)
+        ) {
+            addSystemMessage(
+                "Only the Owner can clear the room."
+            );
+
+            messageInput.value = "";
+            messageInput.focus();
+
+            return;
+        }
+
+        socket.emit("clearRoom");
 
         messageInput.value = "";
         messageInput.focus();
 
         return;
     }
+
     // ===============================
     // NORMAL MESSAGE
     // ===============================
 
-    socket.emit(
-        'chatMessage', {
-            message: message
-        }
-    );
+    socket.emit("chatMessage", {
+        message: message
+    });
 
-    messageInput.value = '';
+    messageInput.value = "";
     messageInput.focus();
 }
 
