@@ -1,3 +1,4 @@
+javascript
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -7,11 +8,31 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Public folder
+// ===============================
+// PUBLIC FOLDER
+// ===============================
+
 app.use(express.static(path.join(__dirname, "public")));
 
-// Online users
+// ===============================
+// ONLINE USERS
+// ===============================
+
 const users = new Map();
+
+// Final Owner username
+const OWNER_USERNAME = "Spidy 007";
+
+// ===============================
+// USERNAME NORMALIZER
+// ===============================
+
+function normalizeUsername(name) {
+    return String(name || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+}
 
 // ===============================
 // SOCKET CONNECTION
@@ -27,223 +48,424 @@ io.on("connection", (socket) => {
 
     socket.on("join", (username) => {
 
-        username = String(username || "").trim();
+        username = String(username || "")
+            .trim()
+            .replace(/\s+/g, " ");
 
         if (!username) {
-            socket.emit("joinError", "Please enter a username.");
+            socket.emit(
+                "joinError",
+                "Please enter a username."
+            );
             return;
         }
 
-        // Check duplicate username
-        const usernameExists = [...users.values()].some(
-            (user) => user.toLowerCase() === username.toLowerCase()
+        // ===============================
+        // DUPLICATE USERNAME CHECK
+        // ===============================
+
+        const usernameExists = [
+            ...users.values()
+        ].some(
+            (user) =>
+                normalizeUsername(user) ===
+                normalizeUsername(username)
         );
 
         if (usernameExists) {
-            socket.emit("joinError", "This username is already online.");
+            socket.emit(
+                "joinError",
+                "This username is already online."
+            );
             return;
         }
 
-        // Save user
-        users.set(socket.id, username);
+        // ===============================
+        // SAVE USER
+        // ===============================
 
-        console.log(`${username} joined the room.`);
+        users.set(
+            socket.id,
+            username
+        );
 
-        // Send successful join
-        socket.emit("joinSuccess", {
-            username: username
-        });
+        console.log(
+            `${username} joined the room.`
+        );
 
-        // Tell EVERYONE that this person joined
-        io.emit("systemMessage", {
-            type: "join",
-            username: username,
-            message: `${username} joined the room`
-        });
+        // ===============================
+        // JOIN SUCCESS
+        // ===============================
 
-        // Update online users
-        io.emit("userList", [...users.values()]);
+        socket.emit(
+            "joinSuccess",
+            {
+                username: username
+            }
+        );
+
+        // ===============================
+        // SYSTEM MESSAGE
+        // ===============================
+
+        io.emit(
+            "systemMessage",
+            {
+                type: "join",
+                username: username,
+                message:
+                    `${username} joined the room`
+            }
+        );
+
+        // ===============================
+        // UPDATE ONLINE USERS
+        // ===============================
+
+        io.emit(
+            "userList",
+            [...users.values()]
+        );
     });
-
 
     // ===============================
     // MAIN ROOM CHAT
     // ===============================
 
-    socket.on("chatMessage", (data) => {
+    socket.on(
+        "chatMessage",
+        (data) => {
 
-        const username = users.get(socket.id);
+            const username =
+                users.get(socket.id);
 
-        if (!username) {
-            return;
+            if (!username) {
+                return;
+            }
+
+            let message = "";
+
+            // Support object
+            if (
+                typeof data === "object" &&
+                data !== null
+            ) {
+                message =
+                    String(
+                        data.message || ""
+                    ).trim();
+            }
+
+            // Support string
+            else {
+                message =
+                    String(
+                        data || ""
+                    ).trim();
+            }
+
+            if (!message) {
+                return;
+            }
+
+            const chatData = {
+                username: username,
+                message: message,
+                time:
+                    new Date().toLocaleTimeString(
+                        [],
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    )
+            };
+
+            // Send message to everyone
+            io.emit(
+                "chatMessage",
+                chatData
+            );
         }
+    );
 
-        let message = "";
+    // ===============================
+    // CLEAR MAIN ROOM
+    // ===============================
 
-        // Support object
-        if (typeof data === "object" && data !== null) {
-            message = String(data.message || "").trim();
+    socket.on(
+        "clearRoom",
+        () => {
+
+            const sender =
+                users.get(socket.id);
+
+            if (!sender) {
+                return;
+            }
+
+            // ===============================
+            // OWNER CHECK
+            // ===============================
+
+            if (
+                normalizeUsername(sender) !==
+                normalizeUsername(OWNER_USERNAME)
+            ) {
+
+                socket.emit(
+                    "systemMessage",
+                    {
+                        type: "error",
+                        message:
+                            "Only the Owner can clear the room."
+                    }
+                );
+
+                return;
+            }
+
+            console.log(
+                `${sender} cleared the main room.`
+            );
+
+            // ===============================
+            // CLEAR EVERYONE'S ROOM
+            // ===============================
+
+            io.emit(
+                "clearRoom",
+                {
+                    by: sender
+                }
+            );
         }
-
-        // Support string
-        else {
-            message = String(data || "").trim();
-        }
-
-        if (!message) {
-            return;
-        }
-
-        const chatData = {
-            username: username,
-            message: message,
-            time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        };
-
-        // Send message to everyone
-        io.emit("chatMessage", chatData);
-    });
-
+    );
 
     // ===============================
     // PRIVATE MESSAGE
     // ===============================
 
-    socket.on("privateMessage", (data) => {
+    socket.on(
+        "privateMessage",
+        (data) => {
 
-        const sender = users.get(socket.id);
+            const sender =
+                users.get(socket.id);
 
-        if (!sender) {
-            return;
-        }
-
-        if (!data || typeof data !== "object") {
-            return;
-        }
-
-        const targetUsername = String(data.to || "").trim();
-        const message = String(data.message || "").trim();
-
-        if (!targetUsername || !message) {
-            return;
-        }
-
-        // Find target user
-        let targetSocketId = null;
-
-        for (const [socketId, username] of users.entries()) {
+            if (!sender) {
+                return;
+            }
 
             if (
-                username.toLowerCase() ===
-                targetUsername.toLowerCase()
+                !data ||
+                typeof data !== "object"
             ) {
-                targetSocketId = socketId;
-                break;
+                return;
             }
+
+            const targetUsername =
+                String(
+                    data.to || ""
+                )
+                    .trim()
+                    .replace(/\s+/g, " ");
+
+            const message =
+                String(
+                    data.message || ""
+                ).trim();
+
+            if (
+                !targetUsername ||
+                !message
+            ) {
+                return;
+            }
+
+            // ===============================
+            // FIND TARGET USER
+            // ===============================
+
+            let targetSocketId = null;
+
+            for (
+                const [
+                    socketId,
+                    username
+                ] of users.entries()
+            ) {
+
+                if (
+                    normalizeUsername(username) ===
+                    normalizeUsername(targetUsername)
+                ) {
+                    targetSocketId =
+                        socketId;
+                    break;
+                }
+            }
+
+            // ===============================
+            // TARGET OFFLINE
+            // ===============================
+
+            if (!targetSocketId) {
+
+                socket.emit(
+                    "privateError",
+                    {
+                        message:
+                            `${targetUsername} is not online.`
+                    }
+                );
+
+                return;
+            }
+
+            // ===============================
+            // PRIVATE MESSAGE DATA
+            // ===============================
+
+            const privateData = {
+                from: sender,
+                to: targetUsername,
+                message: message,
+                time:
+                    new Date().toLocaleTimeString(
+                        [],
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    )
+            };
+
+            // ===============================
+            // SEND TO RECEIVER
+            // ===============================
+
+            io.to(targetSocketId).emit(
+                "privateMessage",
+                privateData
+            );
+
+            // ===============================
+            // SEND COPY TO SENDER
+            // ===============================
+
+            socket.emit(
+                "privateMessage",
+                privateData
+            );
         }
-
-        // Target offline
-        if (!targetSocketId) {
-
-            socket.emit("privateError", {
-                message: `${targetUsername} is not online.`
-            });
-
-            return;
-        }
-
-        const privateData = {
-            from: sender,
-            to: targetUsername,
-            message: message,
-            time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        };
-
-        // Send to receiver
-        io.to(targetSocketId).emit(
-            "privateMessage",
-            privateData
-        );
-
-        // Send copy back to sender
-        socket.emit(
-            "privateMessage",
-            privateData
-        );
-    });
-
+    );
 
     // ===============================
     // LOGOUT
     // ===============================
 
-    socket.on("logout", () => {
+    socket.on(
+        "logout",
+        () => {
 
-        removeUser(socket);
-    });
-
+            removeUser(socket);
+        }
+    );
 
     // ===============================
     // DISCONNECT
     // ===============================
 
-    socket.on("disconnect", () => {
+    socket.on(
+        "disconnect",
+        () => {
 
-        console.log("Disconnected:", socket.id);
+            console.log(
+                "Disconnected:",
+                socket.id
+            );
 
-        removeUser(socket);
-    });
-
+            removeUser(socket);
+        }
+    );
 
     // ===============================
-    // REMOVE USER FUNCTION
+    // REMOVE USER
     // ===============================
 
-    function removeUser(socket) {
+    function removeUser(currentSocket) {
 
-        const username = users.get(socket.id);
+        const username =
+            users.get(
+                currentSocket.id
+            );
 
-        // User already removed
+        // Already removed
         if (!username) {
             return;
         }
 
-        // Remove from online users
-        users.delete(socket.id);
+        // Remove user
+        users.delete(
+            currentSocket.id
+        );
 
-        console.log(`${username} left the room.`);
+        console.log(
+            `${username} left the room.`
+        );
 
-        // Tell everyone
-        io.emit("systemMessage", {
-            type: "leave",
-            username: username,
-            message: `${username} left the room`
-        });
+        // ===============================
+        // LEAVE SYSTEM MESSAGE
+        // ===============================
 
-        // Update online users
-        io.emit("userList", [...users.values()]);
+        io.emit(
+            "systemMessage",
+            {
+                type: "leave",
+                username: username,
+                message:
+                    `${username} left the room`
+            }
+        );
+
+        // ===============================
+        // UPDATE USER LIST
+        // ===============================
+
+        io.emit(
+            "userList",
+            [...users.values()]
+        );
     }
-
 });
-
 
 // ===============================
 // START SERVER
 // ===============================
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+    process.env.PORT || 3000;
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    console.log("-----------------------------------");
-    console.log("Spidy.chat server started!");
-    console.log(`Local: http://localhost:${PORT}`);
-    console.log("-----------------------------------");
+        console.log(
+            "-----------------------------------"
+        );
 
-});
+        console.log(
+            "Spidy.chat server started!"
+        );
+
+        console.log(
+            `Local: http://localhost:${PORT}`
+        );
+
+        console.log(
+            "-----------------------------------"
+        );
+    }
+);
