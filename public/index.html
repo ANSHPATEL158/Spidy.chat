@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Spidy.chat</title>
+
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <!-- ================= LOGIN ================= -->
+
+    <div id="loginScreen">
+
+        <div class="login-box">
+
+            <div class="login-logo"></div>
+
+            <h1>Spidy.chat</h1>
+
+            <p>CHAT • CONNECT • ENJOY</p>
+
+            <input id="usernameInput" type="text" placeholder="Enter your username..." maxlength="20" autocomplete="off">
+
+            <button id="joinButton">
+                ENTER SPIDY.CHAT
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= CHAT ================= -->
+
+    <div id="chatScreen" class="hidden">
+
+        <!-- HEADER -->
+
+        <header class="chat-header">
+
+            <div class="brand">
+
+                <div class="brand-logo"></div>
+
+                <div class="brand-text">
+                    <h1>Spidy.chat</h1>
+                    <span>CHAT • CONNECT • ENJOY</span>
+                </div>
+
+            </div>
+
+
+            <div class="header-right">
+
+                <span id="connectionStatus">
+                    ● Connecting
+                </span>
+
+                <button id="logoutButton">
+                    Logout
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- MAIN AREA -->
+
+        <div class="chat-layout">
+
+
+            <!-- LEFT SIDEBAR -->
+
+            <aside class="left-sidebar">
+
+                <section class="side-section">
+
+                    <h3>✦ ROOMS</h3>
+
+                    <div class="room-item">
+
+                        <div class="room-icon">
+                            💬
+                        </div>
+
+                        <div class="room-info">
+                            <strong>Main Room</strong>
+                            <small>Everyone can chat here</small>
+                        </div>
+
+                        <span class="room-online"></span>
+
+                    </div>
+
+                </section>
+
+
+                <section class="side-section">
+
+                    <h3>✦ ONLINE USERS</h3>
+
+                    <div id="leftUserList"></div>
+
+                </section>
+
+            </aside>
+
+
+            <!-- CHAT CENTER -->
+
+            <main class="chat-center">
+
+                <div class="room-header">
+
+                    <div class="room-header-icon">
+                        💬
+                    </div>
+
+                    <div>
+                        <h2>Main Room</h2>
+                        <p>Everyone can chat here</p>
+                    </div>
+
+                </div>
+
+
+                <div id="messages" class="messages"></div>
+
+
+                <div class="message-input-area">
+
+                    <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off">
+
+                    <button id="sendButton">
+                        ➤
+                    </button>
+
+                </div>
+
+            </main>
+
+
+            <!-- RIGHT SIDEBAR -->
+
+            <aside class="right-sidebar">
+
+
+                <section class="right-panel">
+
+                    <div class="panel-title">
+
+                        <h3>♙ ONLINE USERS</h3>
+
+                    </div>
+
+                    <div id="rightUserList"></div>
+
+                </section>
+
+
+                <section class="right-panel staff-panel">
+
+                    <div class="panel-title">
+
+                        <h3>🛡 STAFF ONLINE</h3>
+
+                    </div>
+
+                    <div id="staffUserList"></div>
+
+                </section>
+
+
+                <section class="vibes-panel">
+
+                    <div class="vibes-spider"></div>
+
+                    <div class="vibes-text">
+
+                        <span>GOOD VIBES</span>
+                        <span>REAL PEOPLE</span>
+                        <span>GREAT CHATS</span>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= PRIVATE CHAT ================= -->
+
+    <div id="privateChatModal" class="hidden">
+
+        <div class="private-chat-box">
+
+            <div class="private-header">
+
+                <span id="privateUsername">
+                    Private Chat
+                </span>
+
+                <button id="closePrivateChat">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div id="privateMessages"></div>
+
+
+            <div class="private-input">
+
+                <input id="privateMessageInput" type="text" placeholder="Type a private message..." autocomplete="off">
+
+                <button id="privateSendButton">
+                    ➤
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SOCKET.IO -->
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- YOUR JS -->
+
+    <script src="/chat.js"></script>
+
+</body>
+
+</html>
