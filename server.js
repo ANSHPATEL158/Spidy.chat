@@ -1,4 +1,3 @@
-javascript
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -68,8 +67,8 @@ io.on("connection", (socket) => {
             ...users.values()
         ].some(
             (user) =>
-                normalizeUsername(user) ===
-                normalizeUsername(username)
+            normalizeUsername(user) ===
+            normalizeUsername(username)
         );
 
         if (usernameExists) {
@@ -98,8 +97,7 @@ io.on("connection", (socket) => {
         // ===============================
 
         socket.emit(
-            "joinSuccess",
-            {
+            "joinSuccess", {
                 username: username
             }
         );
@@ -109,12 +107,10 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "systemMessage",
-            {
+            "systemMessage", {
                 type: "join",
                 username: username,
-                message:
-                    `${username} joined the room`
+                message: `${username} joined the room`
             }
         );
 
@@ -123,8 +119,7 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "userList",
-            [...users.values()]
+            "userList", [...users.values()]
         );
     });
 
@@ -171,14 +166,12 @@ io.on("connection", (socket) => {
             const chatData = {
                 username: username,
                 message: message,
-                time:
-                    new Date().toLocaleTimeString(
-                        [],
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    )
+                time: new Date().toLocaleTimeString(
+                    [], {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                )
             };
 
             // Send message to everyone
@@ -214,11 +207,9 @@ io.on("connection", (socket) => {
             ) {
 
                 socket.emit(
-                    "systemMessage",
-                    {
+                    "systemMessage", {
                         type: "error",
-                        message:
-                            "Only the Owner can clear the room."
+                        message: "Only the Owner can clear the room."
                     }
                 );
 
@@ -234,8 +225,7 @@ io.on("connection", (socket) => {
             // ===============================
 
             io.emit(
-                "clearRoom",
-                {
+                "clearRoom", {
                     by: sender
                 }
             );
@@ -257,8 +247,7 @@ io.on("connection", (socket) => {
                 return;
             }
 
-            if (
-                !data ||
+            if (!data ||
                 typeof data !== "object"
             ) {
                 return;
@@ -268,16 +257,15 @@ io.on("connection", (socket) => {
                 String(
                     data.to || ""
                 )
-                    .trim()
-                    .replace(/\s+/g, " ");
+                .trim()
+                .replace(/\s+/g, " ");
 
             const message =
                 String(
                     data.message || ""
                 ).trim();
 
-            if (
-                !targetUsername ||
+            if (!targetUsername ||
                 !message
             ) {
                 return;
@@ -313,10 +301,8 @@ io.on("connection", (socket) => {
             if (!targetSocketId) {
 
                 socket.emit(
-                    "privateError",
-                    {
-                        message:
-                            `${targetUsername} is not online.`
+                    "privateError", {
+                        message: `${targetUsername} is not online.`
                     }
                 );
 
@@ -331,14 +317,12 @@ io.on("connection", (socket) => {
                 from: sender,
                 to: targetUsername,
                 message: message,
-                time:
-                    new Date().toLocaleTimeString(
-                        [],
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    )
+                time: new Date().toLocaleTimeString(
+                    [], {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                )
             };
 
             // ===============================
@@ -420,12 +404,10 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "systemMessage",
-            {
+            "systemMessage", {
                 type: "leave",
                 username: username,
-                message:
-                    `${username} left the room`
+                message: `${username} left the room`
             }
         );
 
@@ -434,8 +416,7 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "userList",
-            [...users.values()]
+            "userList", [...users.values()]
         );
     }
 });
