@@ -4,71 +4,65 @@ const socket = io();
 // DOM ELEMENTS
 // ===============================
 
-const loginScreen = document.getElementById("loginScreen");
-const chatScreen = document.getElementById("chatScreen");
+const loginScreen = document.getElementById('loginScreen');
+const chatScreen = document.getElementById('chatScreen');
 
-const usernameInput = document.getElementById("usernameInput");
-const joinButton = document.getElementById("joinButton");
+const usernameInput = document.getElementById('usernameInput');
+const joinButton = document.getElementById('joinButton');
 
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
+const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
 
-const messages = document.getElementById("messages");
+const messages = document.getElementById('messages');
 
-const leftUserList = document.getElementById("leftUserList");
-const rightUserList = document.getElementById("rightUserList");
-const staffUserList = document.getElementById("staffUserList");
+const leftUserList = document.getElementById('leftUserList');
+const rightUserList = document.getElementById('rightUserList');
+const staffUserList = document.getElementById('staffUserList');
 
-const logoutButton = document.getElementById("logoutButton");
-
+const logoutButton = document.getElementById('logoutButton');
 
 // ===============================
 // PRIVATE CHAT ELEMENTS
 // ===============================
 
 const privateChatModal =
-    document.getElementById("privateChatModal");
+    document.getElementById('privateChatModal');
 
 const privateUsername =
-    document.getElementById("privateUsername");
+    document.getElementById('privateUsername');
 
 const privateMessages =
-    document.getElementById("privateMessages");
+    document.getElementById('privateMessages');
 
 const privateMessageInput =
-    document.getElementById("privateMessageInput");
+    document.getElementById('privateMessageInput');
 
 const privateSendButton =
-    document.getElementById("privateSendButton");
+    document.getElementById('privateSendButton');
 
 const closePrivateChat =
-    document.getElementById("closePrivateChat");
-
+    document.getElementById('closePrivateChat');
 
 // ===============================
 // VARIABLES
 // ===============================
 
-let username = "";
-let privateChatUser = "";
+let username = '';
+let privateChatUser = '';
 
+const OWNER_USERNAME = "Spidy 007";
 
-// ===============================
-// OWNER
-// ===============================
-
-const OWNER_USERNAME = "Spidy007";
-
-
-// ===============================
-// GET USER RANK
-// ===============================
+function normalizeUsername(name) {
+    return String(name || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+}
 
 function getRank(user) {
-
     if (
-        user.toLowerCase() ===
-        OWNER_USERNAME.toLowerCase()
+        normalizeUsername(user) ===
+        normalizeUsername(OWNER_USERNAME)
     ) {
         return {
             name: "Owner",
@@ -84,183 +78,176 @@ function getRank(user) {
     };
 }
 
-
 // ===============================
 // SHOW CHAT
 // ===============================
+
 function showChat() {
-    loginScreen.classList.add("hidden");
-    chatScreen.classList.remove("hidden");
+    loginScreen.classList.add('hidden');
+    chatScreen.classList.remove('hidden');
 
     messageInput.focus();
 }
-
 
 // ===============================
 // SHOW LOGIN
 // ===============================
 
 function showLogin() {
-
-    chatScreen.classList.add("hidden");
-    loginScreen.classList.remove("hidden");
+    chatScreen.classList.add('hidden');
+    loginScreen.classList.remove('hidden');
 }
-
 
 // ===============================
 // JOIN CHAT
 // ===============================
 
 function joinChat() {
-
     const enteredUsername =
         usernameInput.value.trim();
 
     if (!enteredUsername) {
-
         usernameInput.focus();
         return;
     }
 
     username = enteredUsername;
 
-    // Save username
     localStorage.setItem(
-        "spidy_username",
+        'spidy_username',
         username
     );
 
-    socket.emit("join", username);
+    socket.emit(
+        'join',
+        username
+    );
 }
 
-
 // ===============================
-// JOIN BUTTON
+// LOGIN EVENTS
 // ===============================
 
 joinButton.addEventListener(
-    "click",
+    'click',
     joinChat
 );
 
-
-// Enter key on login
 usernameInput.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (event.key === "Enter") {
+    'keydown',
+    function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
             joinChat();
         }
-
     }
 );
-
 
 // ===============================
 // SOCKET CONNECT
 // ===============================
 
-socket.on("connect", () => {
-
-    console.log("Connected to server.");
-
-    const savedUsername =
-        localStorage.getItem("spidy_username");
-
-    if (savedUsername) {
-
-        username = savedUsername;
-
-        socket.emit(
-            "join",
-            savedUsername
+socket.on(
+    'connect',
+    function() {
+        console.log(
+            'Connected to server:',
+            socket.id
         );
+
+        const savedUsername =
+            localStorage.getItem(
+                'spidy_username'
+            );
+
+        if (savedUsername) {
+            username = savedUsername;
+
+            socket.emit(
+                'join',
+                savedUsername
+            );
+        }
     }
-
-});
-
+);
 
 // ===============================
 // JOIN SUCCESS
 // ===============================
 
-socket.on("joinSuccess", (data) => {
+socket.on(
+    'joinSuccess',
+    function(data) {
+        if (!data || !data.username) {
+            return;
+        }
 
-    username = data.username;
+        username = data.username;
 
-    localStorage.setItem(
-        "spidy_username",
-        username
-    );
+        localStorage.setItem(
+            'spidy_username',
+            username
+        );
 
-    showChat();
-});
-
+        showChat();
+    }
+);
 
 // ===============================
 // JOIN ERROR
 // ===============================
 
 socket.on(
-    "joinError",
-    (message) => {
-
+    'joinError',
+    function(message) {
         console.log(
-            "Join error:",
+            'Join error:',
             message
         );
 
-        // Remove saved username if rejected
         localStorage.removeItem(
-            "spidy_username"
+            'spidy_username'
         );
 
-        username = "";
+        username = '';
 
-        alert(message);
+        alert(
+            message ||
+            'Unable to join chat.'
+        );
 
         showLogin();
-
         usernameInput.focus();
     }
 );
 
-
 // ===============================
-// MAIN ROOM CHAT
+// MAIN ROOM
 // ===============================
 
 sendButton.addEventListener(
-    "click",
+    'click',
     sendMessage
 );
 
-
 messageInput.addEventListener(
-    "keydown",
-    (event) => {
-
+    'keydown',
+    function(event) {
         if (
-            event.key === "Enter" &&
+            event.key === 'Enter' &&
             !event.shiftKey
         ) {
-
             event.preventDefault();
-
             sendMessage();
         }
-
     }
 );
 
-
 // ===============================
-// SEND MAIN ROOM MESSAGE
+// SEND MESSAGE
 // ===============================
 
 function sendMessage() {
-
     const message =
         messageInput.value.trim();
 
@@ -268,44 +255,81 @@ function sendMessage() {
         return;
     }
 
+    // ===============================
+    // /CLEAR
+    // ===============================
+
+    if (
+        normalizeUsername(username) !==
+        normalizeUsername(OWNER_USERNAME)
+    ) {
+        addSystemMessage(
+            "Only the Owner can clear the room."
+        );
+
+        messageInput.value = "";
+        messageInput.focus();
+
+        return;
+    }
+    // ===============================
+    // NORMAL MESSAGE
+    // ===============================
+
     socket.emit(
-        "chatMessage", {
+        'chatMessage', {
             message: message
         }
     );
 
-    messageInput.value = "";
-
+    messageInput.value = '';
     messageInput.focus();
 }
 
-
 // ===============================
-// RECEIVE MAIN ROOM MESSAGE
+// RECEIVE MAIN CHAT
 // ===============================
 
 socket.on(
-    "chatMessage",
-    (data) => {
-
+    'chatMessage',
+    function(data) {
         if (!data ||
-            typeof data !== "object"
+            typeof data !== 'object'
         ) {
             return;
         }
 
         addMessage(
-            data.username || "User",
-            data.message || "",
-            data.time || ""
+            data.username || 'User',
+            data.message || '',
+            data.time || ''
         );
-
     }
 );
 
+// ===============================
+// CLEAR ROOM
+// ===============================
+
+socket.on(
+    'clearRoom',
+    function(data) {
+        messages.innerHTML = '';
+
+        const clearedBy =
+            data && data.by ?
+            data.by :
+            'Owner';
+
+        addSystemMessage(
+            'Main room cleared by ' +
+            clearedBy
+        );
+    }
+);
 
 // ===============================
-// ADD MESSAGE TO ROOM
+// ADD MESSAGE
 // ===============================
 
 function addMessage(
@@ -313,217 +337,216 @@ function addMessage(
     message,
     time
 ) {
+    const wrapper =
+        document.createElement('div');
 
-    const messageWrapper =
-        document.createElement("div");
+    wrapper.className = 'message';
 
-    messageWrapper.className =
-        "message-wrapper";
+    // Spider avatar
+    const avatar =
+        document.createElement('div');
 
+    avatar.className =
+        'message-avatar';
+
+    avatar.title =
+        sender;
+
+    // Message content
+    const content =
+        document.createElement('div');
+
+    content.className =
+        'message-content';
+
+    // Header
+    const header =
+        document.createElement('div');
+
+    header.className =
+        'message-header';
+
+    const senderName =
+        document.createElement('span');
 
     const rank =
         getRank(sender);
 
-
-    const messageBubble =
-        document.createElement("div");
-
-    messageBubble.className =
-        "message-bubble";
-
-
-    const messageHeader =
-        document.createElement("div");
-
-    messageHeader.className =
-        "message-header";
-
-
-    const senderName =
-        document.createElement("span");
-
     senderName.className =
-        `message-username ${rank.className}`;
+        'message-username ' +
+        rank.className;
 
     senderName.textContent =
-        `${rank.icon} ${sender}`;
+        rank.icon +
+        ' ' +
+        sender;
 
+    const timeElement =
+        document.createElement('span');
 
-    const messageTime =
-        document.createElement("span");
+    timeElement.className =
+        'message-time';
 
-    messageTime.className =
-        "message-time";
+    timeElement.textContent =
+        time || '';
 
-    messageTime.textContent =
-        time;
+    // Text
+    const text =
+        document.createElement('div');
 
+    text.className =
+        'message-text';
 
-    const messageText =
-        document.createElement("div");
-
-    messageText.className =
-        "message-text";
-
-    messageText.textContent =
+    text.textContent =
         message;
 
-
-    messageHeader.appendChild(
+    // Build
+    header.appendChild(
         senderName
     );
 
-    messageHeader.appendChild(
-        messageTime
+    header.appendChild(
+        timeElement
     );
 
-    messageBubble.appendChild(
-        messageHeader
+    content.appendChild(
+        header
     );
 
-    messageBubble.appendChild(
-        messageText
+    content.appendChild(
+        text
     );
 
-    messageWrapper.appendChild(
-        messageBubble
+    wrapper.appendChild(
+        avatar
+    );
+
+    wrapper.appendChild(
+        content
     );
 
     messages.appendChild(
-        messageWrapper
+        wrapper
     );
 
-
-    // Scroll to bottom
     messages.scrollTop =
         messages.scrollHeight;
 }
-
 
 // ===============================
 // SYSTEM MESSAGE
 // ===============================
 
 socket.on(
-    "systemMessage",
-    (data) => {
-
+    'systemMessage',
+    function(data) {
         if (!data) {
             return;
         }
 
-        addSystemMessage(
+        const text =
             data.message ||
-            `${data.username || "Someone"} joined the room`
-        );
+            (
+                (data.username ||
+                    'Someone') +
+                ' joined the room'
+            );
 
+        addSystemMessage(
+            text
+        );
     }
 );
-
 
 // ===============================
 // ADD SYSTEM MESSAGE
 // ===============================
 
-function addSystemMessage(message) {
+function addSystemMessage(
+    message
+) {
+    const element =
+        document.createElement('div');
 
-    const systemDiv =
-        document.createElement("div");
+    element.className =
+        'system-message';
 
-    systemDiv.className =
-        "system-message";
-
-    systemDiv.textContent =
-        `✦ ${message}`;
+    element.textContent =
+        '✦ ' + message;
 
     messages.appendChild(
-        systemDiv
+        element
     );
 
     messages.scrollTop =
         messages.scrollHeight;
 }
 
-
 // ===============================
 // USER LIST
 // ===============================
 
 socket.on(
-    "userList",
-    (userList) => {
+    'userList',
+    function(userList) {
+        if (!Array.isArray(userList)) {
+            return;
+        }
 
-        updateUserLists(userList);
-
+        updateUserLists(
+            userList
+        );
     }
 );
-
 
 // ===============================
 // UPDATE USER LISTS
 // ===============================
 
-function updateUserLists(userList) {
-
-    leftUserList.innerHTML = "";
-    rightUserList.innerHTML = "";
-    staffUserList.innerHTML = "";
-
+function updateUserLists(
+    userList
+) {
+    leftUserList.innerHTML = '';
+    rightUserList.innerHTML = '';
+    staffUserList.innerHTML = '';
 
     userList.forEach(
-        (user) => {
-
+        function(user) {
             const rank =
                 getRank(user);
 
-
-            // LEFT USER
-            const leftItem =
-                createUserElement(
-                    user,
-                    rank
-                );
-
+            // Left
             leftUserList.appendChild(
-                leftItem
-            );
-
-
-            // RIGHT USER
-            const rightItem =
                 createUserElement(
                     user,
                     rank
-                );
-
-            rightUserList.appendChild(
-                rightItem
+                )
             );
 
+            // Right
+            rightUserList.appendChild(
+                createUserElement(
+                    user,
+                    rank
+                )
+            );
 
-            // STAFF LIST
+            // Staff
             if (
-                rank.name === "Owner" ||
-                rank.name === "Admin" ||
-                rank.name === "Moderator"
+                rank.name === 'Owner' ||
+                rank.name === 'Admin' ||
+                rank.name === 'Moderator'
             ) {
-
-                const staffItem =
+                staffUserList.appendChild(
                     createUserElement(
                         user,
                         rank
-                    );
-
-                staffUserList.appendChild(
-                    staffItem
+                    )
                 );
             }
-
         }
     );
-
 }
-
 
 // ===============================
 // CREATE USER ELEMENT
@@ -533,158 +556,167 @@ function createUserElement(
     user,
     rank
 ) {
+    const item =
+        document.createElement('div');
 
-    const userItem =
-        document.createElement("div");
+    item.className =
+        'online-user';
 
-    userItem.className =
-        "online-user";
+    const left =
+        document.createElement('div');
 
+    left.className =
+        'online-user-left';
 
-    const userLeft =
-        document.createElement("div");
+    // Spider avatar
+    const avatar =
+        document.createElement('div');
 
-    userLeft.className =
-        "online-user-left";
+    avatar.className =
+        'user-avatar';
 
+    avatar.title =
+        user;
 
-    const onlineDot =
-        document.createElement("span");
+    // Online dot
+    const dot =
+        document.createElement('span');
 
-    onlineDot.className =
-        "online-dot";
+    dot.className =
+        'online-dot';
 
-
+    // Name
     const name =
-        document.createElement("span");
+        document.createElement('span');
 
     name.className =
-        "online-name";
+        'online-name';
 
     name.textContent =
         user;
 
-
-    userLeft.appendChild(
-        onlineDot
+    left.appendChild(
+        avatar
     );
 
-    userLeft.appendChild(
+    left.appendChild(
+        dot
+    );
+
+    left.appendChild(
         name
     );
 
+    // Rank
+    const badge =
+        document.createElement('span');
 
-    const rankBadge =
-        document.createElement("span");
+    badge.className =
+        'rank-badge ' +
+        rank.className;
 
-    rankBadge.className =
-        `rank-badge ${rank.className}`;
+    badge.textContent =
+        rank.icon +
+        ' ' +
+        rank.name;
 
-    rankBadge.textContent =
-        `${rank.icon} ${rank.name}`;
-
-
-    userItem.appendChild(
-        userLeft
+    item.appendChild(
+        left
     );
 
-    userItem.appendChild(
-        rankBadge
+    item.appendChild(
+        badge
     );
 
-
-    // Click user to open private chat
-    userItem.addEventListener(
-        "click",
-        () => {
-
+    // Private chat
+    item.addEventListener(
+        'click',
+        function() {
             if (
-                user.toLowerCase() ===
+                String(user).toLowerCase() ===
                 username.toLowerCase()
             ) {
                 return;
             }
 
-            openPrivateChat(user);
-
+            openPrivateChat(
+                user
+            );
         }
     );
 
-
-    return userItem;
+    return item;
 }
-
 
 // ===============================
 // OPEN PRIVATE CHAT
 // ===============================
 
-function openPrivateChat(user) {
+function openPrivateChat(
+    user
+) {
+    if (!user) {
+        return;
+    }
 
-    privateChatUser = user;
+    privateChatUser =
+        String(user);
 
     privateUsername.textContent =
-        user;
+        privateChatUser;
 
-    privateMessages.innerHTML = "";
+    privateMessages.innerHTML =
+        '';
 
     privateChatModal.classList.remove(
-        "hidden"
+        'hidden'
     );
 
     privateMessageInput.focus();
 }
-
 
 // ===============================
 // CLOSE PRIVATE CHAT
 // ===============================
 
 closePrivateChat.addEventListener(
-    "click",
-    () => {
-
+    'click',
+    function() {
         privateChatModal.classList.add(
-            "hidden"
+            'hidden'
         );
 
-        privateChatUser = "";
+        privateChatUser = '';
 
+        privateMessages.innerHTML =
+            '';
     }
 );
 
-
 // ===============================
-// PRIVATE MESSAGE SEND
+// PRIVATE CHAT SEND
 // ===============================
 
 privateSendButton.addEventListener(
-    "click",
+    'click',
     sendPrivateMessage
 );
 
-
 privateMessageInput.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (event.key === "Enter") {
-
+    'keydown',
+    function(event) {
+        if (event.key === 'Enter') {
             event.preventDefault();
-
             sendPrivateMessage();
         }
-
     }
 );
-
 
 // ===============================
 // SEND PRIVATE MESSAGE
 // ===============================
 
 function sendPrivateMessage() {
-
     const message =
         privateMessageInput.value.trim();
 
@@ -695,62 +727,84 @@ function sendPrivateMessage() {
     }
 
     socket.emit(
-        "privateMessage", {
+        'privateMessage', {
             to: privateChatUser,
             message: message
         }
     );
 
-    privateMessageInput.value = "";
+    privateMessageInput.value =
+        '';
 
     privateMessageInput.focus();
 }
-
 
 // ===============================
 // RECEIVE PRIVATE MESSAGE
 // ===============================
 
 socket.on(
-    "privateMessage",
-    (data) => {
-
+    'privateMessage',
+    function(data) {
         if (!data) {
             return;
         }
 
-        // If private chat is not open,
-        // open it automatically
+        const sender =
+            String(
+                data.from || ''
+            );
+
+        const receiver =
+            String(
+                data.to || ''
+            );
+
+        // Open automatically
         if (
             privateChatModal.classList.contains(
-                "hidden"
+                'hidden'
             )
         ) {
-
-            openPrivateChat(
-                data.from
-            );
+            if (
+                sender &&
+                sender.toLowerCase() !==
+                username.toLowerCase()
+            ) {
+                openPrivateChat(
+                    sender
+                );
+            }
         }
 
+        if (!privateChatUser) {
+            return;
+        }
 
-        // Only show messages for current chat
-        if (
-            data.from !== privateChatUser &&
-            data.to !== privateChatUser
+        const currentChat =
+            privateChatUser.toLowerCase();
+
+        const fromMatches =
+            sender.toLowerCase() ===
+            currentChat;
+
+        const toMatches =
+            receiver.toLowerCase() ===
+            currentChat;
+
+        if (!fromMatches &&
+            !toMatches
         ) {
             return;
         }
 
-
         addPrivateMessage(
-            data.from,
-            data.message,
-            data.time
+            sender,
+            data.message || '',
+            data.time || ''
         );
-
     }
 );
-
 
 // ===============================
 // ADD PRIVATE MESSAGE
@@ -761,119 +815,125 @@ function addPrivateMessage(
     message,
     time
 ) {
+    const element =
+        document.createElement('div');
 
-    const div =
-        document.createElement("div");
-
-    div.className =
-        "private-message";
-
+    element.className =
+        'private-message';
 
     const senderName =
-        document.createElement("strong");
+        document.createElement('strong');
 
     senderName.textContent =
         sender;
 
-
     const text =
-        document.createElement("span");
+        document.createElement('span');
 
     text.textContent =
-        message;
+        ' ' + message;
 
+    const timeElement =
+        document.createElement('small');
 
-    const messageTime =
-        document.createElement("small");
+    timeElement.textContent =
+        time || '';
 
-    messageTime.textContent =
-        time;
-
-
-    div.appendChild(
+    element.appendChild(
         senderName
     );
 
-    div.appendChild(
+    element.appendChild(
         text
     );
 
-    div.appendChild(
-        messageTime
+    element.appendChild(
+        timeElement
     );
-
 
     privateMessages.appendChild(
-        div
+        element
     );
-
 
     privateMessages.scrollTop =
         privateMessages.scrollHeight;
 }
-
 
 // ===============================
 // PRIVATE ERROR
 // ===============================
 
 socket.on(
-    "privateError",
-    (data) => {
-
+    'privateError',
+    function(data) {
         if (!data) {
             return;
         }
 
-        console.log(
-            data.message
+        addSystemMessage(
+            data.message ||
+            'Private message could not be sent.'
         );
-
     }
 );
-
 
 // ===============================
 // LOGOUT
 // ===============================
 
 logoutButton.addEventListener(
-    "click",
-    () => {
-
+    'click',
+    function() {
         localStorage.removeItem(
-            "spidy_username"
+            'spidy_username'
         );
 
-        username = "";
+        username = '';
+        privateChatUser = '';
 
-        socket.emit("logout");
+        socket.emit(
+            'logout'
+        );
 
         showLogin();
 
-        usernameInput.value = "";
+        usernameInput.value = '';
 
-        messages.innerHTML = "";
+        messages.innerHTML =
+            '';
+
+        privateMessages.innerHTML =
+            '';
 
         privateChatModal.classList.add(
-            "hidden"
+            'hidden'
         );
-
     }
 );
-
 
 // ===============================
 // SOCKET DISCONNECT
 // ===============================
 
 socket.on(
-    "disconnect",
-    () => {
-
+    'disconnect',
+    function() {
         console.log(
-            "Disconnected from server."
+            'Disconnected from server.'
         );
+    }
+);
 
+// ===============================
+// SOCKET ERROR
+// ===============================
+
+socket.on(
+    'connect_error',
+    function(error) {
+        console.error(
+            'Socket connection error:',
+            error
+        );
     }
 );
