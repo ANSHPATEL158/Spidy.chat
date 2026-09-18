@@ -52,6 +52,10 @@ let privateChatUser = '';
 
 const OWNER_USERNAME = 'Spidy 007';
 
+// ===============================
+// USERNAME NORMALIZER
+// ===============================
+
 function normalizeUsername(name) {
     return String(name || '')
         .trim()
@@ -59,7 +63,12 @@ function normalizeUsername(name) {
         .toLowerCase();
 }
 
+// ===============================
+// GET RANK
+// ===============================
+
 function getRank(user) {
+
     if (
         normalizeUsername(user) ===
         normalizeUsername(OWNER_USERNAME)
@@ -83,10 +92,14 @@ function getRank(user) {
 // ===============================
 
 function showChat() {
+
     loginScreen.classList.add('hidden');
+
     chatScreen.classList.remove('hidden');
 
-    messageInput.focus();
+    setTimeout(function() {
+        messageInput.focus();
+    }, 100);
 }
 
 // ===============================
@@ -94,7 +107,9 @@ function showChat() {
 // ===============================
 
 function showLogin() {
+
     chatScreen.classList.add('hidden');
+
     loginScreen.classList.remove('hidden');
 }
 
@@ -103,11 +118,14 @@ function showLogin() {
 // ===============================
 
 function joinChat() {
+
     const enteredUsername =
         usernameInput.value.trim();
 
     if (!enteredUsername) {
+
         usernameInput.focus();
+
         return;
     }
 
@@ -136,8 +154,11 @@ joinButton.addEventListener(
 usernameInput.addEventListener(
     'keydown',
     function(event) {
+
         if (event.key === 'Enter') {
+
             event.preventDefault();
+
             joinChat();
         }
     }
@@ -150,6 +171,7 @@ usernameInput.addEventListener(
 socket.on(
     'connect',
     function() {
+
         console.log(
             'Connected to server:',
             socket.id
@@ -160,7 +182,12 @@ socket.on(
                 'spidy_username'
             );
 
+        // ===============================
+        // AUTO LOGIN AFTER REFRESH
+        // ===============================
+
         if (savedUsername) {
+
             username = savedUsername;
 
             socket.emit(
@@ -178,7 +205,11 @@ socket.on(
 socket.on(
     'joinSuccess',
     function(data) {
-        if (!data || !data.username) {
+
+        if (
+            !data ||
+            !data.username
+        ) {
             return;
         }
 
@@ -190,6 +221,11 @@ socket.on(
         );
 
         showChat();
+
+        console.log(
+            'Login restored:',
+            username
+        );
     }
 );
 
@@ -200,6 +236,7 @@ socket.on(
 socket.on(
     'joinError',
     function(message) {
+
         console.log(
             'Join error:',
             message
@@ -217,12 +254,13 @@ socket.on(
         );
 
         showLogin();
+
         usernameInput.focus();
     }
 );
 
 // ===============================
-// MAIN ROOM
+// MAIN ROOM EVENTS
 // ===============================
 
 sendButton.addEventListener(
@@ -233,11 +271,14 @@ sendButton.addEventListener(
 messageInput.addEventListener(
     'keydown',
     function(event) {
+
         if (
             event.key === 'Enter' &&
             !event.shiftKey
         ) {
+
             event.preventDefault();
+
             sendMessage();
         }
     }
@@ -248,6 +289,7 @@ messageInput.addEventListener(
 // ===============================
 
 function sendMessage() {
+
     const message =
         messageInput.value.trim();
 
@@ -259,50 +301,64 @@ function sendMessage() {
     // /CLEAR COMMAND
     // ===============================
 
-    if (message.toLowerCase() === "/clear") {
+    if (
+        message.toLowerCase() ===
+        '/clear'
+    ) {
 
         if (
             normalizeUsername(username) !==
             normalizeUsername(OWNER_USERNAME)
         ) {
+
             addSystemMessage(
-                "Only the Owner can clear the room."
+                'Only the Owner can clear the room.'
             );
 
-            messageInput.value = "";
+            messageInput.value = '';
+
             messageInput.focus();
 
             return;
         }
 
-        socket.emit("clearRoom");
+        socket.emit(
+            'clearRoom'
+        );
 
-        messageInput.value = "";
+        messageInput.value = '';
+
         messageInput.focus();
 
         return;
     }
 
     // ===============================
-    // NORMAL MESSAGE
+    // SEND NORMAL MESSAGE
     // ===============================
 
-    socket.emit("chatMessage", {
-        message: message
-    });
+    socket.emit(
+        'chatMessage',
+        {
+            message: message
+        }
+    );
 
-    messageInput.value = "";
+    messageInput.value = '';
+
     messageInput.focus();
 }
 
 // ===============================
-// RECEIVE MAIN CHAT
+// RECEIVE NEW MAIN CHAT MESSAGE
 // ===============================
 
 socket.on(
     'chatMessage',
     function(data) {
-        if (!data ||
+
+        if (
+            !data ||
             typeof data !== 'object'
         ) {
             return;
@@ -317,18 +373,69 @@ socket.on(
 );
 
 // ===============================
+// RESTORE CHAT HISTORY AFTER REFRESH
+// ===============================
+
+socket.on(
+    'chatHistory',
+    function(history) {
+
+        if (!Array.isArray(history)) {
+
+            console.log(
+                'No chat history received.'
+            );
+
+            return;
+        }
+
+        console.log(
+            'Chat history received:',
+            history.length,
+            'messages'
+        );
+
+        // Clear current messages
+        messages.innerHTML = '';
+
+        // Restore every old message
+        history.forEach(
+            function(data) {
+
+                if (
+                    !data ||
+                    !data.message
+                ) {
+                    return;
+                }
+
+                addMessage(
+                    data.username || 'User',
+                    data.message || '',
+                    data.time || ''
+                );
+            }
+        );
+
+        messages.scrollTop =
+            messages.scrollHeight;
+    }
+);
+
+// ===============================
 // CLEAR ROOM
 // ===============================
 
 socket.on(
     'clearRoom',
     function(data) {
+
         messages.innerHTML = '';
 
         const clearedBy =
-            data && data.by ?
-            data.by :
-            'Owner';
+            data && data.by
+                ? data.by
+                : 'Owner';
 
         addSystemMessage(
             'Main room cleared by ' +
@@ -338,7 +445,7 @@ socket.on(
 );
 
 // ===============================
-// ADD MESSAGE
+// ADD MAIN MESSAGE
 // ===============================
 
 function addMessage(
@@ -346,12 +453,32 @@ function addMessage(
     message,
     time
 ) {
+
     const wrapper =
         document.createElement('div');
 
-    wrapper.className = 'message';
+    // ===============================
+    // WHATSAPP STYLE ALIGNMENT
+    // ===============================
 
-    // Spider avatar
+    if (
+        normalizeUsername(sender) ===
+        normalizeUsername(username)
+    ) {
+
+        wrapper.className =
+            'message mine';
+
+    } else {
+
+        wrapper.className =
+            'message';
+    }
+
+    // ===============================
+    // AVATAR
+    // ===============================
+
     const avatar =
         document.createElement('div');
 
@@ -361,19 +488,29 @@ function addMessage(
     avatar.title =
         sender;
 
-    // Message content
+    // ===============================
+    // CONTENT
+    // ===============================
+
     const content =
         document.createElement('div');
 
     content.className =
         'message-content';
 
-    // Header
+    // ===============================
+    // HEADER
+    // ===============================
+
     const header =
         document.createElement('div');
 
     header.className =
         'message-header';
+
+    // ===============================
+    // USERNAME
+    // ===============================
 
     const senderName =
         document.createElement('span');
@@ -390,6 +527,10 @@ function addMessage(
         ' ' +
         sender;
 
+    // ===============================
+    // TIME
+    // ===============================
+
     const timeElement =
         document.createElement('span');
 
@@ -399,7 +540,10 @@ function addMessage(
     timeElement.textContent =
         time || '';
 
-    // Text
+    // ===============================
+    // MESSAGE TEXT
+    // ===============================
+
     const text =
         document.createElement('div');
 
@@ -409,7 +553,10 @@ function addMessage(
     text.textContent =
         message;
 
-    // Build
+    // ===============================
+    // BUILD MESSAGE
+    // ===============================
+
     header.appendChild(
         senderName
     );
@@ -438,6 +585,10 @@ function addMessage(
         wrapper
     );
 
+    // ===============================
+    // AUTO SCROLL
+    // ===============================
+
     messages.scrollTop =
         messages.scrollHeight;
 }
@@ -449,6 +600,7 @@ function addMessage(
 socket.on(
     'systemMessage',
     function(data) {
+
         if (!data) {
             return;
         }
@@ -474,6 +626,7 @@ socket.on(
 function addSystemMessage(
     message
 ) {
+
     const element =
         document.createElement('div');
 
@@ -481,7 +634,8 @@ function addSystemMessage(
         'system-message';
 
     element.textContent =
-        '✦ ' + message;
+        '✦ ' +
+        message;
 
     messages.appendChild(
         element
@@ -498,7 +652,10 @@ function addSystemMessage(
 socket.on(
     'userList',
     function(userList) {
-        if (!Array.isArray(userList)) {
+
+        if (
+            !Array.isArray(userList)
+        ) {
             return;
         }
 
@@ -515,16 +672,23 @@ socket.on(
 function updateUserLists(
     userList
 ) {
+
     leftUserList.innerHTML = '';
+
     rightUserList.innerHTML = '';
+
     staffUserList.innerHTML = '';
 
     userList.forEach(
         function(user) {
+
             const rank =
                 getRank(user);
 
-            // Left
+            // ===============================
+            // LEFT LIST
+            // ===============================
+
             leftUserList.appendChild(
                 createUserElement(
                     user,
@@ -532,7 +696,10 @@ function updateUserLists(
                 )
             );
 
-            // Right
+            // ===============================
+            // RIGHT LIST
+            // ===============================
+
             rightUserList.appendChild(
                 createUserElement(
                     user,
@@ -540,12 +707,16 @@ function updateUserLists(
                 )
             );
 
-            // Staff
+            // ===============================
+            // STAFF LIST
+            // ===============================
+
             if (
                 rank.name === 'Owner' ||
                 rank.name === 'Admin' ||
                 rank.name === 'Moderator'
             ) {
+
                 staffUserList.appendChild(
                     createUserElement(
                         user,
@@ -565,11 +736,16 @@ function createUserElement(
     user,
     rank
 ) {
+
     const item =
         document.createElement('div');
 
     item.className =
         'online-user';
+
+    // ===============================
+    // LEFT SIDE
+    // ===============================
 
     const left =
         document.createElement('div');
@@ -577,7 +753,10 @@ function createUserElement(
     left.className =
         'online-user-left';
 
-    // Spider avatar
+    // ===============================
+    // AVATAR
+    // ===============================
+
     const avatar =
         document.createElement('div');
 
@@ -587,14 +766,20 @@ function createUserElement(
     avatar.title =
         user;
 
-    // Online dot
+    // ===============================
+    // ONLINE DOT
+    // ===============================
+
     const dot =
         document.createElement('span');
 
     dot.className =
         'online-dot';
 
-    // Name
+    // ===============================
+    // USERNAME
+    // ===============================
+
     const name =
         document.createElement('span');
 
@@ -603,6 +788,10 @@ function createUserElement(
 
     name.textContent =
         user;
+
+    // ===============================
+    // BUILD LEFT SIDE
+    // ===============================
 
     left.appendChild(
         avatar
@@ -616,7 +805,10 @@ function createUserElement(
         name
     );
 
-    // Rank
+    // ===============================
+    // RANK BADGE
+    // ===============================
+
     const badge =
         document.createElement('span');
 
@@ -629,6 +821,10 @@ function createUserElement(
         ' ' +
         rank.name;
 
+    // ===============================
+    // BUILD USER ELEMENT
+    // ===============================
+
     item.appendChild(
         left
     );
@@ -637,13 +833,17 @@ function createUserElement(
         badge
     );
 
-    // Private chat
+    // ===============================
+    // PRIVATE CHAT
+    // ===============================
+
     item.addEventListener(
         'click',
         function() {
+
             if (
-                String(user).toLowerCase() ===
-                username.toLowerCase()
+                normalizeUsername(user) ===
+                normalizeUsername(username)
             ) {
                 return;
             }
@@ -664,6 +864,7 @@ function createUserElement(
 function openPrivateChat(
     user
 ) {
+
     if (!user) {
         return;
     }
@@ -691,6 +892,7 @@ function openPrivateChat(
 closePrivateChat.addEventListener(
     'click',
     function() {
+
         privateChatModal.classList.add(
             'hidden'
         );
@@ -703,7 +905,7 @@ closePrivateChat.addEventListener(
 );
 
 // ===============================
-// PRIVATE CHAT SEND
+// PRIVATE CHAT EVENTS
 // ===============================
 
 privateSendButton.addEventListener(
@@ -714,8 +916,11 @@ privateSendButton.addEventListener(
 privateMessageInput.addEventListener(
     'keydown',
     function(event) {
+
         if (event.key === 'Enter') {
+
             event.preventDefault();
+
             sendPrivateMessage();
         }
     }
@@ -726,17 +931,20 @@ privateMessageInput.addEventListener(
 // ===============================
 
 function sendPrivateMessage() {
+
     const message =
         privateMessageInput.value.trim();
 
-    if (!message ||
+    if (
+        !message ||
         !privateChatUser
     ) {
         return;
     }
 
     socket.emit(
-        'privateMessage', {
+        'privateMessage',
+        {
             to: privateChatUser,
             message: message
         }
@@ -755,6 +963,7 @@ function sendPrivateMessage() {
 socket.on(
     'privateMessage',
     function(data) {
+
         if (!data) {
             return;
         }
@@ -769,17 +978,22 @@ socket.on(
                 data.to || ''
             );
 
-        // Open automatically
+        // ===============================
+        // AUTO OPEN PRIVATE CHAT
+        // ===============================
+
         if (
             privateChatModal.classList.contains(
                 'hidden'
             )
         ) {
+
             if (
                 sender &&
-                sender.toLowerCase() !==
-                username.toLowerCase()
+                normalizeUsername(sender) !==
+                normalizeUsername(username)
             ) {
+
                 openPrivateChat(
                     sender
                 );
@@ -791,17 +1005,20 @@ socket.on(
         }
 
         const currentChat =
-            privateChatUser.toLowerCase();
+            normalizeUsername(
+                privateChatUser
+            );
 
         const fromMatches =
-            sender.toLowerCase() ===
+            normalizeUsername(sender) ===
             currentChat;
 
         const toMatches =
-            receiver.toLowerCase() ===
+            normalizeUsername(receiver) ===
             currentChat;
 
-        if (!fromMatches &&
+        if (
+            !fromMatches &&
             !toMatches
         ) {
             return;
@@ -824,11 +1041,16 @@ function addPrivateMessage(
     message,
     time
 ) {
+
     const element =
         document.createElement('div');
 
     element.className =
         'private-message';
+
+    // ===============================
+    // SENDER
+    // ===============================
 
     const senderName =
         document.createElement('strong');
@@ -836,17 +1058,30 @@ function addPrivateMessage(
     senderName.textContent =
         sender;
 
+    // ===============================
+    // TEXT
+    // ===============================
+
     const text =
         document.createElement('span');
 
     text.textContent =
-        ' ' + message;
+        ' ' +
+        message;
+
+    // ===============================
+    // TIME
+    // ===============================
 
     const timeElement =
         document.createElement('small');
 
     timeElement.textContent =
         time || '';
+
+    // ===============================
+    // BUILD
+    // ===============================
 
     element.appendChild(
         senderName
@@ -875,6 +1110,7 @@ function addPrivateMessage(
 socket.on(
     'privateError',
     function(data) {
+
         if (!data) {
             return;
         }
@@ -893,11 +1129,13 @@ socket.on(
 logoutButton.addEventListener(
     'click',
     function() {
+
         localStorage.removeItem(
             'spidy_username'
         );
 
         username = '';
+
         privateChatUser = '';
 
         socket.emit(
@@ -906,7 +1144,8 @@ logoutButton.addEventListener(
 
         showLogin();
 
-        usernameInput.value = '';
+        usernameInput.value =
+            '';
 
         messages.innerHTML =
             '';
@@ -927,6 +1166,7 @@ logoutButton.addEventListener(
 socket.on(
     'disconnect',
     function() {
+
         console.log(
             'Disconnected from server.'
         );
@@ -940,6 +1180,7 @@ socket.on(
 socket.on(
     'connect_error',
     function(error) {
+
         console.error(
             'Socket connection error:',
             error
