@@ -19,6 +19,15 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const users = new Map();
 
+// ===============================
+// CHAT HISTORY
+// ===============================
+
+// Keeps the latest 100 messages in server memory.
+// This survives browser refreshes while the server is running.
+const chatHistory = [];
+const MAX_MESSAGES = 100;
+
 // Final Owner username
 const OWNER_USERNAME = "Spidy 007";
 
@@ -103,6 +112,15 @@ io.on("connection", (socket) => {
         );
 
         // ===============================
+        // SEND OLD CHAT HISTORY
+        // ===============================
+
+        socket.emit(
+            "chatHistory",
+            chatHistory
+        );
+
+        // ===============================
         // SYSTEM MESSAGE
         // ===============================
 
@@ -119,7 +137,8 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "userList", [...users.values()]
+            "userList",
+            [...users.values()]
         );
     });
 
@@ -174,7 +193,26 @@ io.on("connection", (socket) => {
                 )
             };
 
-            // Send message to everyone
+            // ===============================
+            // SAVE MESSAGE TO HISTORY
+            // ===============================
+
+            chatHistory.push(
+                chatData
+            );
+
+            // Keep only latest 100 messages
+            if (
+                chatHistory.length >
+                MAX_MESSAGES
+            ) {
+                chatHistory.shift();
+            }
+
+            // ===============================
+            // SEND MESSAGE TO EVERYONE
+            // ===============================
+
             io.emit(
                 "chatMessage",
                 chatData
@@ -209,7 +247,8 @@ io.on("connection", (socket) => {
                 socket.emit(
                     "systemMessage", {
                         type: "error",
-                        message: "Only the Owner can clear the room."
+                        message:
+                            "Only the Owner can clear the room."
                     }
                 );
 
@@ -219,6 +258,12 @@ io.on("connection", (socket) => {
             console.log(
                 `${sender} cleared the main room.`
             );
+
+            // ===============================
+            // CLEAR STORED HISTORY
+            // ===============================
+
+            chatHistory.length = 0;
 
             // ===============================
             // CLEAR EVERYONE'S ROOM
@@ -247,7 +292,8 @@ io.on("connection", (socket) => {
                 return;
             }
 
-            if (!data ||
+            if (
+                !data ||
                 typeof data !== "object"
             ) {
                 return;
@@ -265,7 +311,8 @@ io.on("connection", (socket) => {
                     data.message || ""
                 ).trim();
 
-            if (!targetUsername ||
+            if (
+                !targetUsername ||
                 !message
             ) {
                 return;
@@ -290,6 +337,7 @@ io.on("connection", (socket) => {
                 ) {
                     targetSocketId =
                         socketId;
+
                     break;
                 }
             }
@@ -302,7 +350,8 @@ io.on("connection", (socket) => {
 
                 socket.emit(
                     "privateError", {
-                        message: `${targetUsername} is not online.`
+                        message:
+                            `${targetUsername} is not online.`
                     }
                 );
 
@@ -407,7 +456,8 @@ io.on("connection", (socket) => {
             "systemMessage", {
                 type: "leave",
                 username: username,
-                message: `${username} left the room`
+                message:
+                    `${username} left the room`
             }
         );
 
@@ -416,7 +466,8 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "userList", [...users.values()]
+            "userList",
+            [...users.values()]
         );
     }
 });
