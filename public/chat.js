@@ -49,7 +49,6 @@ const closePrivateChat =
 
 let username = '';
 let privateChatUser = '';
-
 let quotedMessage = null;
 
 const OWNER_USERNAME = 'Spidy 007';
@@ -191,16 +190,16 @@ function getRank(user) {
     ) {
 
         return {
-            name: "Owner",
-            icon: "👑",
-            className: "owner"
+            name: 'Owner',
+            icon: '👑',
+            className: 'owner'
         };
     }
 
     return {
-        name: "User",
-        icon: "👤",
-        className: "user"
+        name: 'User',
+        icon: '👤',
+        className: 'user'
     };
 }
 
@@ -426,9 +425,7 @@ function sendMessage() {
 
         if (
             normalizeUsername(username) !==
-            normalizeUsername(
-                OWNER_USERNAME
-            )
+            normalizeUsername(OWNER_USERNAME)
         ) {
 
             addSystemMessage(
@@ -468,6 +465,7 @@ function sendMessage() {
     if (quotedMessage) {
 
         messageData.quote = {
+
             id:
                 quotedMessage.id,
 
@@ -514,9 +512,7 @@ socket.on(
             return;
         }
 
-        addMessage(
-            data
-        );
+        addMessage(data);
     }
 );
 
@@ -528,9 +524,7 @@ socket.on(
     'chatHistory',
     function(history) {
 
-        if (
-            !Array.isArray(history)
-        ) {
+        if (!Array.isArray(history)) {
 
             console.log(
                 'No chat history received.'
@@ -557,9 +551,7 @@ socket.on(
                     return;
                 }
 
-                addMessage(
-                    data
-                );
+                addMessage(data);
             }
         );
 
@@ -567,6 +559,96 @@ socket.on(
             messages.scrollHeight;
     }
 );
+
+// ===============================
+// YOUTUBE VIDEO ID DETECTOR
+// ===============================
+
+function getYouTubeVideoId(message) {
+
+    if (!message) {
+        return null;
+    }
+
+    const text =
+        String(message).trim();
+
+    const patterns = [
+
+        // youtube.com/watch?v=XXXXXXXXXXX
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?(?:[^\s#]*&)?v=([A-Za-z0-9_-]{11})(?:[^\s]*)?/i,
+
+        // youtu.be/XXXXXXXXXXX
+        /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([A-Za-z0-9_-]{11})(?:[?&#][^\s]*)?/i,
+
+        // youtube.com/shorts/XXXXXXXXXXX
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([A-Za-z0-9_-]{11})(?:[?&#][^\s]*)?/i
+    ];
+
+    for (
+        const pattern of patterns
+    ) {
+
+        const match =
+            text.match(pattern);
+
+        if (
+            match &&
+            match[1]
+        ) {
+
+            return match[1];
+        }
+    }
+
+    return null;
+}
+
+// ===============================
+// CREATE YOUTUBE PREVIEW
+// ===============================
+
+function createYouTubePreview(videoId) {
+
+    if (!videoId) {
+        return null;
+    }
+
+    const preview =
+        document.createElement('div');
+
+    preview.className =
+        'youtube-preview';
+
+    const iframe =
+        document.createElement('iframe');
+
+    iframe.src =
+        'https://www.youtube.com/embed/' +
+        encodeURIComponent(videoId) +
+        '?rel=0';
+
+    iframe.title =
+        'YouTube video';
+
+    iframe.loading =
+        'lazy';
+
+    iframe.referrerPolicy =
+        'strict-origin-when-cross-origin';
+
+    iframe.allow =
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+
+    iframe.allowFullscreen =
+        true;
+
+    preview.appendChild(
+        iframe
+    );
+
+    return preview;
+}
 
 // ===============================
 // ADD MAIN MESSAGE
@@ -611,7 +693,10 @@ function addMessage(data) {
             'message';
     }
 
-    // Store message ID
+    // ===============================
+    // STORE MESSAGE ID
+    // ===============================
+
     if (messageId) {
 
         wrapper.dataset.messageId =
@@ -740,8 +825,34 @@ function addMessage(data) {
     text.className =
         'message-text';
 
-    text.textContent =
-        message;
+    // ===============================
+    // YOUTUBE DETECTION
+    // ===============================
+
+    const youtubeVideoId =
+        getYouTubeVideoId(message);
+
+    const youtubePreview =
+        createYouTubePreview(
+            youtubeVideoId
+        );
+
+    // ===============================
+    // HIDE YOUTUBE LINK
+    // ===============================
+
+    if (youtubeVideoId) {
+
+        // YouTube URL hide rahega
+        text.style.display =
+            'none';
+
+    } else {
+
+        // Normal message show hoga
+        text.textContent =
+            message;
+    }
 
     // ===============================
     // MESSAGE ACTIONS
@@ -785,6 +896,7 @@ function addMessage(data) {
                 }
 
                 setQuote({
+
                     id:
                         messageId,
 
@@ -869,6 +981,17 @@ function addMessage(data) {
         text
     );
 
+    // ===============================
+    // ADD YOUTUBE PREVIEW
+    // ===============================
+
+    if (youtubePreview) {
+
+        content.appendChild(
+            youtubePreview
+        );
+    }
+
     if (
         actions.children.length > 0
     ) {
@@ -916,6 +1039,7 @@ function setQuote(messageData) {
         messageData;
 
     // Remove old preview
+
     const oldPreview =
         document.getElementById(
             'quotePreview'
@@ -1071,6 +1195,7 @@ socket.on(
         }
 
         // If currently selected quote was deleted
+
         if (
             quotedMessage &&
             String(quotedMessage.id) ===
@@ -1218,6 +1343,7 @@ function updateUserLists(
                 getRank(user);
 
             // LEFT
+
             leftUserList.appendChild(
                 createUserElement(
                     user,
@@ -1226,6 +1352,7 @@ function updateUserLists(
             );
 
             // RIGHT
+
             rightUserList.appendChild(
                 createUserElement(
                     user,
@@ -1234,6 +1361,7 @@ function updateUserLists(
             );
 
             // STAFF
+
             if (
                 rank.name === 'Owner' ||
                 rank.name === 'Admin' ||
