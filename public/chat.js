@@ -50,13 +50,129 @@ const closePrivateChat =
 let username = '';
 let privateChatUser = '';
 
+let quotedMessage = null;
+
 const OWNER_USERNAME = 'Spidy 007';
+
+// ===============================
+// QUOTE UI STYLE
+// ===============================
+
+const quoteStyle = document.createElement('style');
+
+quoteStyle.textContent = `
+    .message-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 7px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .message:hover .message-actions {
+        opacity: 1;
+    }
+
+    .message-action-btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 4px 9px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.08);
+        color: #ffffff;
+    }
+
+    .message-action-btn:hover {
+        background: rgba(255,255,255,0.18);
+    }
+
+    .delete-message-btn {
+        color: #ff6b6b;
+    }
+
+    .quote-message-btn {
+        color: #8ecbff;
+    }
+
+    .quoted-message {
+        margin-bottom: 8px;
+        padding: 7px 10px;
+        border-left: 3px solid #007bff;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.07);
+        font-size: 12px;
+        opacity: 0.9;
+    }
+
+    .quoted-message-user {
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .quoted-message-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .quote-preview {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 9px 12px;
+        margin-bottom: 8px;
+        border-left: 3px solid #007bff;
+        border-radius: 7px;
+        background: rgba(0,123,255,0.10);
+        color: #ffffff;
+    }
+
+    .quote-preview-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .quote-preview-title {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .quote-preview-text {
+        font-size: 12px;
+        opacity: 0.8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cancel-quote-btn {
+        border: 0;
+        background: transparent;
+        color: #ff6b6b;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 2px 6px;
+    }
+
+    .message-deleted {
+        opacity: 0.4;
+    }
+`;
+
+document.head.appendChild(
+    quoteStyle
+);
 
 // ===============================
 // USERNAME NORMALIZER
 // ===============================
 
 function normalizeUsername(name) {
+
     return String(name || '')
         .trim()
         .replace(/\s+/g, ' ')
@@ -73,6 +189,7 @@ function getRank(user) {
         normalizeUsername(user) ===
         normalizeUsername(OWNER_USERNAME)
     ) {
+
         return {
             name: "Owner",
             icon: "👑",
@@ -98,7 +215,9 @@ function showChat() {
     chatScreen.classList.remove('hidden');
 
     setTimeout(function() {
+
         messageInput.focus();
+
     }, 100);
 }
 
@@ -129,7 +248,8 @@ function joinChat() {
         return;
     }
 
-    username = enteredUsername;
+    username =
+        enteredUsername;
 
     localStorage.setItem(
         'spidy_username',
@@ -182,13 +302,10 @@ socket.on(
                 'spidy_username'
             );
 
-        // ===============================
-        // AUTO LOGIN AFTER REFRESH
-        // ===============================
-
         if (savedUsername) {
 
-            username = savedUsername;
+            username =
+                savedUsername;
 
             socket.emit(
                 'join',
@@ -213,7 +330,8 @@ socket.on(
             return;
         }
 
-        username = data.username;
+        username =
+            data.username;
 
         localStorage.setItem(
             'spidy_username',
@@ -285,7 +403,7 @@ messageInput.addEventListener(
 );
 
 // ===============================
-// SEND MESSAGE
+// SEND MAIN MESSAGE
 // ===============================
 
 function sendMessage() {
@@ -308,7 +426,9 @@ function sendMessage() {
 
         if (
             normalizeUsername(username) !==
-            normalizeUsername(OWNER_USERNAME)
+            normalizeUsername(
+                OWNER_USERNAME
+            )
         ) {
 
             addSystemMessage(
@@ -334,23 +454,53 @@ function sendMessage() {
     }
 
     // ===============================
-    // SEND NORMAL MESSAGE
+    // MESSAGE DATA
+    // ===============================
+
+    const messageData = {
+        message: message
+    };
+
+    // ===============================
+    // ADD QUOTE
+    // ===============================
+
+    if (quotedMessage) {
+
+        messageData.quote = {
+            id:
+                quotedMessage.id,
+
+            username:
+                quotedMessage.username,
+
+            message:
+                quotedMessage.message
+        };
+    }
+
+    // ===============================
+    // SEND
     // ===============================
 
     socket.emit(
         'chatMessage',
-        {
-            message: message
-        }
+        messageData
     );
 
+    // ===============================
+    // CLEAR INPUT
+    // ===============================
+
     messageInput.value = '';
+
+    clearQuote();
 
     messageInput.focus();
 }
 
 // ===============================
-// RECEIVE NEW MAIN CHAT MESSAGE
+// RECEIVE NEW MAIN MESSAGE
 // ===============================
 
 socket.on(
@@ -365,22 +515,22 @@ socket.on(
         }
 
         addMessage(
-            data.username || 'User',
-            data.message || '',
-            data.time || ''
+            data
         );
     }
 );
 
 // ===============================
-// RESTORE CHAT HISTORY AFTER REFRESH
+// RESTORE CHAT HISTORY
 // ===============================
 
 socket.on(
     'chatHistory',
     function(history) {
 
-        if (!Array.isArray(history)) {
+        if (
+            !Array.isArray(history)
+        ) {
 
             console.log(
                 'No chat history received.'
@@ -395,10 +545,8 @@ socket.on(
             'messages'
         );
 
-        // Clear current messages
         messages.innerHTML = '';
 
-        // Restore every old message
         history.forEach(
             function(data) {
 
@@ -410,9 +558,7 @@ socket.on(
                 }
 
                 addMessage(
-                    data.username || 'User',
-                    data.message || '',
-                    data.time || ''
+                    data
                 );
             }
         );
@@ -423,43 +569,33 @@ socket.on(
 );
 
 // ===============================
-// CLEAR ROOM
-// ===============================
-
-socket.on(
-    'clearRoom',
-    function(data) {
-
-        messages.innerHTML = '';
-
-        const clearedBy =
-            data && data.by
-                ? data.by
-                : 'Owner';
-
-        addSystemMessage(
-            'Main room cleared by ' +
-            clearedBy
-        );
-    }
-);
-
-// ===============================
 // ADD MAIN MESSAGE
 // ===============================
 
-function addMessage(
-    sender,
-    message,
-    time
-) {
+function addMessage(data) {
+
+    if (!data) {
+        return;
+    }
+
+    const sender =
+        data.username || 'User';
+
+    const message =
+        data.message || '';
+
+    const time =
+        data.time || '';
+
+    const messageId =
+        data.id || '';
+
+    // ===============================
+    // MESSAGE WRAPPER
+    // ===============================
 
     const wrapper =
         document.createElement('div');
-
-    // ===============================
-    // WHATSAPP STYLE ALIGNMENT
-    // ===============================
 
     if (
         normalizeUsername(sender) ===
@@ -473,6 +609,13 @@ function addMessage(
 
         wrapper.className =
             'message';
+    }
+
+    // Store message ID
+    if (messageId) {
+
+        wrapper.dataset.messageId =
+            messageId;
     }
 
     // ===============================
@@ -538,7 +681,54 @@ function addMessage(
         'message-time';
 
     timeElement.textContent =
-        time || '';
+        time;
+
+    // ===============================
+    // QUOTED MESSAGE
+    // ===============================
+
+    if (
+        data.quote &&
+        data.quote.message
+    ) {
+
+        const quotedBox =
+            document.createElement('div');
+
+        quotedBox.className =
+            'quoted-message';
+
+        const quotedUser =
+            document.createElement('div');
+
+        quotedUser.className =
+            'quoted-message-user';
+
+        quotedUser.textContent =
+            data.quote.username ||
+            'User';
+
+        const quotedText =
+            document.createElement('div');
+
+        quotedText.className =
+            'quoted-message-text';
+
+        quotedText.textContent =
+            data.quote.message;
+
+        quotedBox.appendChild(
+            quotedUser
+        );
+
+        quotedBox.appendChild(
+            quotedText
+        );
+
+        content.appendChild(
+            quotedBox
+        );
+    }
 
     // ===============================
     // MESSAGE TEXT
@@ -554,7 +744,109 @@ function addMessage(
         message;
 
     // ===============================
-    // BUILD MESSAGE
+    // MESSAGE ACTIONS
+    // ===============================
+
+    const actions =
+        document.createElement('div');
+
+    actions.className =
+        'message-actions';
+
+    // ===============================
+    // QUOTE BUTTON
+    // ===============================
+
+    if (
+        normalizeUsername(sender) !==
+        normalizeUsername(username)
+    ) {
+
+        const quoteButton =
+            document.createElement('button');
+
+        quoteButton.type =
+            'button';
+
+        quoteButton.className =
+            'message-action-btn quote-message-btn';
+
+        quoteButton.textContent =
+            '↩ Quote';
+
+        quoteButton.addEventListener(
+            'click',
+            function(event) {
+
+                event.stopPropagation();
+
+                if (!messageId) {
+                    return;
+                }
+
+                setQuote({
+                    id:
+                        messageId,
+
+                    username:
+                        sender,
+
+                    message:
+                        message
+                });
+            }
+        );
+
+        actions.appendChild(
+            quoteButton
+        );
+    }
+
+    // ===============================
+    // DELETE BUTTON
+    // ===============================
+
+    if (
+        normalizeUsername(sender) ===
+        normalizeUsername(username)
+    ) {
+
+        const deleteButton =
+            document.createElement('button');
+
+        deleteButton.type =
+            'button';
+
+        deleteButton.className =
+            'message-action-btn delete-message-btn';
+
+        deleteButton.textContent =
+            '🗑 Delete';
+
+        deleteButton.addEventListener(
+            'click',
+            function(event) {
+
+                event.stopPropagation();
+
+                if (!messageId) {
+                    return;
+                }
+
+                socket.emit(
+                    'deleteMessage',
+                    messageId
+                );
+            }
+        );
+
+        actions.appendChild(
+            deleteButton
+        );
+    }
+
+    // ===============================
+    // BUILD HEADER
     // ===============================
 
     header.appendChild(
@@ -565,6 +857,10 @@ function addMessage(
         timeElement
     );
 
+    // ===============================
+    // BUILD CONTENT
+    // ===============================
+
     content.appendChild(
         header
     );
@@ -572,6 +868,19 @@ function addMessage(
     content.appendChild(
         text
     );
+
+    if (
+        actions.children.length > 0
+    ) {
+
+        content.appendChild(
+            actions
+        );
+    }
+
+    // ===============================
+    // BUILD WRAPPER
+    // ===============================
 
     wrapper.appendChild(
         avatar
@@ -592,6 +901,229 @@ function addMessage(
     messages.scrollTop =
         messages.scrollHeight;
 }
+
+// ===============================
+// SET QUOTE
+// ===============================
+
+function setQuote(messageData) {
+
+    if (!messageData) {
+        return;
+    }
+
+    quotedMessage =
+        messageData;
+
+    // Remove old preview
+    const oldPreview =
+        document.getElementById(
+            'quotePreview'
+        );
+
+    if (oldPreview) {
+        oldPreview.remove();
+    }
+
+    // ===============================
+    // CREATE PREVIEW
+    // ===============================
+
+    const preview =
+        document.createElement('div');
+
+    preview.id =
+        'quotePreview';
+
+    preview.className =
+        'quote-preview';
+
+    const previewContent =
+        document.createElement('div');
+
+    previewContent.className =
+        'quote-preview-content';
+
+    const title =
+        document.createElement('div');
+
+    title.className =
+        'quote-preview-title';
+
+    title.textContent =
+        '↩ Replying to ' +
+        messageData.username;
+
+    const previewText =
+        document.createElement('div');
+
+    previewText.className =
+        'quote-preview-text';
+
+    previewText.textContent =
+        messageData.message;
+
+    previewContent.appendChild(
+        title
+    );
+
+    previewContent.appendChild(
+        previewText
+    );
+
+    // ===============================
+    // CANCEL BUTTON
+    // ===============================
+
+    const cancelButton =
+        document.createElement('button');
+
+    cancelButton.type =
+        'button';
+
+    cancelButton.className =
+        'cancel-quote-btn';
+
+    cancelButton.textContent =
+        '×';
+
+    cancelButton.title =
+        'Cancel quote';
+
+    cancelButton.addEventListener(
+        'click',
+        clearQuote
+    );
+
+    preview.appendChild(
+        previewContent
+    );
+
+    preview.appendChild(
+        cancelButton
+    );
+
+    // ===============================
+    // INSERT BEFORE INPUT
+    // ===============================
+
+    const inputParent =
+        messageInput.parentElement;
+
+    if (inputParent) {
+
+        inputParent.parentElement.insertBefore(
+            preview,
+            inputParent
+        );
+    }
+
+    messageInput.focus();
+}
+
+// ===============================
+// CLEAR QUOTE
+// ===============================
+
+function clearQuote() {
+
+    quotedMessage =
+        null;
+
+    const preview =
+        document.getElementById(
+            'quotePreview'
+        );
+
+    if (preview) {
+        preview.remove();
+    }
+}
+
+// ===============================
+// MESSAGE DELETED
+// ===============================
+
+socket.on(
+    'messageDeleted',
+    function(data) {
+
+        if (
+            !data ||
+            !data.id
+        ) {
+            return;
+        }
+
+        const messageId =
+            String(data.id);
+
+        const messageElement =
+            messages.querySelector(
+                '[data-message-id="' +
+                messageId +
+                '"]'
+            );
+
+        if (messageElement) {
+
+            messageElement.remove();
+        }
+
+        // If currently selected quote was deleted
+        if (
+            quotedMessage &&
+            String(quotedMessage.id) ===
+            messageId
+        ) {
+
+            clearQuote();
+        }
+    }
+);
+
+// ===============================
+// DELETE ERROR
+// ===============================
+
+socket.on(
+    'deleteError',
+    function(data) {
+
+        if (!data) {
+            return;
+        }
+
+        addSystemMessage(
+            data.message ||
+            'Message could not be deleted.'
+        );
+    }
+);
+
+// ===============================
+// CLEAR ROOM
+// ===============================
+
+socket.on(
+    'clearRoom',
+    function(data) {
+
+        messages.innerHTML = '';
+
+        clearQuote();
+
+        const clearedBy =
+            data && data.by
+                ? data.by
+                : 'Owner';
+
+        addSystemMessage(
+            'Main room cleared by ' +
+            clearedBy
+        );
+    }
+);
 
 // ===============================
 // SYSTEM MESSAGE
@@ -685,10 +1217,7 @@ function updateUserLists(
             const rank =
                 getRank(user);
 
-            // ===============================
-            // LEFT LIST
-            // ===============================
-
+            // LEFT
             leftUserList.appendChild(
                 createUserElement(
                     user,
@@ -696,10 +1225,7 @@ function updateUserLists(
                 )
             );
 
-            // ===============================
-            // RIGHT LIST
-            // ===============================
-
+            // RIGHT
             rightUserList.appendChild(
                 createUserElement(
                     user,
@@ -707,10 +1233,7 @@ function updateUserLists(
                 )
             );
 
-            // ===============================
-            // STAFF LIST
-            // ===============================
-
+            // STAFF
             if (
                 rank.name === 'Owner' ||
                 rank.name === 'Admin' ||
@@ -743,10 +1266,6 @@ function createUserElement(
     item.className =
         'online-user';
 
-    // ===============================
-    // LEFT SIDE
-    // ===============================
-
     const left =
         document.createElement('div');
 
@@ -777,7 +1296,7 @@ function createUserElement(
         'online-dot';
 
     // ===============================
-    // USERNAME
+    // NAME
     // ===============================
 
     const name =
@@ -790,7 +1309,7 @@ function createUserElement(
         user;
 
     // ===============================
-    // BUILD LEFT SIDE
+    // BUILD LEFT
     // ===============================
 
     left.appendChild(
@@ -806,7 +1325,7 @@ function createUserElement(
     );
 
     // ===============================
-    // RANK BADGE
+    // RANK
     // ===============================
 
     const badge =
@@ -822,7 +1341,7 @@ function createUserElement(
         rank.name;
 
     // ===============================
-    // BUILD USER ELEMENT
+    // BUILD USER
     // ===============================
 
     item.appendChild(
@@ -979,7 +1498,7 @@ socket.on(
             );
 
         // ===============================
-        // AUTO OPEN PRIVATE CHAT
+        // AUTO OPEN
         // ===============================
 
         if (
@@ -1048,19 +1567,11 @@ function addPrivateMessage(
     element.className =
         'private-message';
 
-    // ===============================
-    // SENDER
-    // ===============================
-
     const senderName =
         document.createElement('strong');
 
     senderName.textContent =
         sender;
-
-    // ===============================
-    // TEXT
-    // ===============================
 
     const text =
         document.createElement('span');
@@ -1069,19 +1580,11 @@ function addPrivateMessage(
         ' ' +
         message;
 
-    // ===============================
-    // TIME
-    // ===============================
-
     const timeElement =
         document.createElement('small');
 
     timeElement.textContent =
         time || '';
-
-    // ===============================
-    // BUILD
-    // ===============================
 
     element.appendChild(
         senderName
@@ -1137,6 +1640,8 @@ logoutButton.addEventListener(
         username = '';
 
         privateChatUser = '';
+
+        clearQuote();
 
         socket.emit(
             'logout'
