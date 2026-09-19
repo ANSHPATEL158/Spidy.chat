@@ -23,12 +23,20 @@ const users = new Map();
 // CHAT HISTORY
 // ===============================
 
-// Keeps the latest 100 messages in server memory.
-// This survives browser refreshes while the server is running.
+// Keeps latest 100 messages in server memory.
 const chatHistory = [];
 const MAX_MESSAGES = 100;
 
-// Final Owner username
+// ===============================
+// MESSAGE ID
+// ===============================
+
+let messageIdCounter = 1;
+
+// ===============================
+// OWNER
+// ===============================
+
 const OWNER_USERNAME = "Spidy 007";
 
 // ===============================
@@ -48,7 +56,10 @@ function normalizeUsername(name) {
 
 io.on("connection", (socket) => {
 
-    console.log("New connection:", socket.id);
+    console.log(
+        "New connection:",
+        socket.id
+    );
 
     // ===============================
     // USER JOIN
@@ -61,10 +72,12 @@ io.on("connection", (socket) => {
             .replace(/\s+/g, " ");
 
         if (!username) {
+
             socket.emit(
                 "joinError",
                 "Please enter a username."
             );
+
             return;
         }
 
@@ -76,15 +89,17 @@ io.on("connection", (socket) => {
             ...users.values()
         ].some(
             (user) =>
-            normalizeUsername(user) ===
-            normalizeUsername(username)
+                normalizeUsername(user) ===
+                normalizeUsername(username)
         );
 
         if (usernameExists) {
+
             socket.emit(
                 "joinError",
                 "This username is already online."
             );
+
             return;
         }
 
@@ -106,13 +121,14 @@ io.on("connection", (socket) => {
         // ===============================
 
         socket.emit(
-            "joinSuccess", {
+            "joinSuccess",
+            {
                 username: username
             }
         );
 
         // ===============================
-        // SEND OLD CHAT HISTORY
+        // SEND CHAT HISTORY
         // ===============================
 
         socket.emit(
@@ -121,19 +137,21 @@ io.on("connection", (socket) => {
         );
 
         // ===============================
-        // SYSTEM MESSAGE
+        // JOIN SYSTEM MESSAGE
         // ===============================
 
         io.emit(
-            "systemMessage", {
+            "systemMessage",
+            {
                 type: "join",
                 username: username,
-                message: `${username} joined the room`
+                message:
+                    `${username} joined the room`
             }
         );
 
         // ===============================
-        // UPDATE ONLINE USERS
+        // UPDATE USER LIST
         // ===============================
 
         io.emit(
@@ -143,7 +161,7 @@ io.on("connection", (socket) => {
     });
 
     // ===============================
-    // MAIN ROOM CHAT
+    // MAIN CHAT MESSAGE
     // ===============================
 
     socket.on(
@@ -159,19 +177,18 @@ io.on("connection", (socket) => {
 
             let message = "";
 
-            // Support object
             if (
                 typeof data === "object" &&
                 data !== null
             ) {
+
                 message =
                     String(
                         data.message || ""
                     ).trim();
-            }
 
-            // Support string
-            else {
+            } else {
+
                 message =
                     String(
                         data || ""
@@ -182,40 +199,211 @@ io.on("connection", (socket) => {
                 return;
             }
 
+            // ===============================
+            // CREATE MESSAGE ID
+            // ===============================
+
+            const messageId =
+                String(
+                    messageIdCounter++
+                );
+
+            // ===============================
+            // QUOTE DATA
+            // ===============================
+
+            let quote = null;
+
+            if (
+                typeof data === "object" &&
+                data !== null &&
+                data.quote
+            ) {
+
+                const quoteData =
+                    data.quote;
+
+                if (
+                    typeof quoteData ===
+                    "object"
+                ) {
+
+                    quote = {
+                        id:
+                            String(
+                                quoteData.id ||
+                                ""
+                            ),
+
+                        username:
+                            String(
+                                quoteData.username ||
+                                ""
+                            ),
+
+                        message:
+                            String(
+                                quoteData.message ||
+                                ""
+                            )
+                    };
+                }
+            }
+
+            // ===============================
+            // MESSAGE DATA
+            // ===============================
+
             const chatData = {
+
+                id: messageId,
+
                 username: username,
+
                 message: message,
-                time: new Date().toLocaleTimeString(
-                    [], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    }
-                )
+
+                time:
+                    new Date().toLocaleTimeString(
+                        [],
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    ),
+
+                quote: quote
             };
 
             // ===============================
-            // SAVE MESSAGE TO HISTORY
+            // SAVE MESSAGE
             // ===============================
 
             chatHistory.push(
                 chatData
             );
 
-            // Keep only latest 100 messages
+            // ===============================
+            // LIMIT HISTORY
+            // ===============================
+
             if (
                 chatHistory.length >
                 MAX_MESSAGES
             ) {
+
                 chatHistory.shift();
             }
 
             // ===============================
-            // SEND MESSAGE TO EVERYONE
+            // SEND TO EVERYONE
             // ===============================
 
             io.emit(
                 "chatMessage",
                 chatData
+            );
+        }
+    );
+
+    // ===============================
+    // DELETE MESSAGE
+    // ===============================
+
+    socket.on(
+        "deleteMessage",
+        (messageId) => {
+
+            const username =
+                users.get(socket.id);
+
+            if (!username) {
+                return;
+            }
+
+            const id =
+                String(
+                    messageId || ""
+                );
+
+            if (!id) {
+                return;
+            }
+
+            // ===============================
+            // FIND MESSAGE
+            // ===============================
+
+            const messageIndex =
+                chatHistory.findIndex(
+                    (message) =>
+                        String(message.id) === id
+                );
+
+            if (
+                messageIndex === -1
+            ) {
+
+                socket.emit(
+                    "deleteError",
+                    {
+                        message:
+                            "Message not found."
+                    }
+                );
+
+                return;
+            }
+
+            const targetMessage =
+                chatHistory[
+                    messageIndex
+                ];
+
+            // ===============================
+            // ONLY MESSAGE OWNER CAN DELETE
+            // ===============================
+
+            if (
+                normalizeUsername(
+                    targetMessage.username
+                ) !==
+                normalizeUsername(username)
+            ) {
+
+                socket.emit(
+                    "deleteError",
+                    {
+                        message:
+                            "You can only delete your own messages."
+                    }
+                );
+
+                return;
+            }
+
+            // ===============================
+            // REMOVE FROM HISTORY
+            // ===============================
+
+            chatHistory.splice(
+                messageIndex,
+                1
+            );
+
+            console.log(
+                `${username} deleted message ${id}`
+            );
+
+            // ===============================
+            // REMOVE FROM EVERYONE'S SCREEN
+            // ===============================
+
+            io.emit(
+                "messageDeleted",
+                {
+                    id: id,
+                    by: username
+                }
             );
         }
     );
@@ -241,11 +429,14 @@ io.on("connection", (socket) => {
 
             if (
                 normalizeUsername(sender) !==
-                normalizeUsername(OWNER_USERNAME)
+                normalizeUsername(
+                    OWNER_USERNAME
+                )
             ) {
 
                 socket.emit(
-                    "systemMessage", {
+                    "systemMessage",
+                    {
                         type: "error",
                         message:
                             "Only the Owner can clear the room."
@@ -260,17 +451,18 @@ io.on("connection", (socket) => {
             );
 
             // ===============================
-            // CLEAR STORED HISTORY
+            // CLEAR HISTORY
             // ===============================
 
             chatHistory.length = 0;
 
             // ===============================
-            // CLEAR EVERYONE'S ROOM
+            // CLEAR EVERYONE
             // ===============================
 
             io.emit(
-                "clearRoom", {
+                "clearRoom",
+                {
                     by: sender
                 }
             );
@@ -303,8 +495,8 @@ io.on("connection", (socket) => {
                 String(
                     data.to || ""
                 )
-                .trim()
-                .replace(/\s+/g, " ");
+                    .trim()
+                    .replace(/\s+/g, " ");
 
             const message =
                 String(
@@ -332,9 +524,14 @@ io.on("connection", (socket) => {
             ) {
 
                 if (
-                    normalizeUsername(username) ===
-                    normalizeUsername(targetUsername)
+                    normalizeUsername(
+                        username
+                    ) ===
+                    normalizeUsername(
+                        targetUsername
+                    )
                 ) {
+
                     targetSocketId =
                         socketId;
 
@@ -349,7 +546,8 @@ io.on("connection", (socket) => {
             if (!targetSocketId) {
 
                 socket.emit(
-                    "privateError", {
+                    "privateError",
+                    {
                         message:
                             `${targetUsername} is not online.`
                     }
@@ -363,28 +561,36 @@ io.on("connection", (socket) => {
             // ===============================
 
             const privateData = {
+
                 from: sender,
+
                 to: targetUsername,
+
                 message: message,
-                time: new Date().toLocaleTimeString(
-                    [], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    }
-                )
+
+                time:
+                    new Date().toLocaleTimeString(
+                        [],
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    )
             };
 
             // ===============================
             // SEND TO RECEIVER
             // ===============================
 
-            io.to(targetSocketId).emit(
+            io.to(
+                targetSocketId
+            ).emit(
                 "privateMessage",
                 privateData
             );
 
             // ===============================
-            // SEND COPY TO SENDER
+            // SEND TO SENDER
             // ===============================
 
             socket.emit(
@@ -427,19 +633,19 @@ io.on("connection", (socket) => {
     // REMOVE USER
     // ===============================
 
-    function removeUser(currentSocket) {
+    function removeUser(
+        currentSocket
+    ) {
 
         const username =
             users.get(
                 currentSocket.id
             );
 
-        // Already removed
         if (!username) {
             return;
         }
 
-        // Remove user
         users.delete(
             currentSocket.id
         );
@@ -453,9 +659,12 @@ io.on("connection", (socket) => {
         // ===============================
 
         io.emit(
-            "systemMessage", {
+            "systemMessage",
+            {
                 type: "leave",
+
                 username: username,
+
                 message:
                     `${username} left the room`
             }
