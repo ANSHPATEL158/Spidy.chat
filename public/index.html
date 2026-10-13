@@ -133,15 +133,42 @@
                 <div id="messages" class="messages"></div>
 
 
-                <div class="message-input-area">
+                
+<div class="message-input-area">
 
-                    <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off">
+    <!-- Upload image, GIF or video -->
+    <input
+        id="uploadInput"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+        hidden
+    >
 
-                    <button id="sendButton">
-                        ➤
-                    </button>
+    <button
+        id="uploadButton"
+        type="button"
+        title="Upload image, GIF or video"
+        aria-label="Upload image, GIF or video"
+    >
+        📎
+    </button>
 
-                </div>
+    <!-- Chat message -->
+    <input
+        id="messageInput"
+        type="text"
+        placeholder="Type a message or paste a GIF/YouTube link..."
+        autocomplete="off"
+    >
+
+    <button id="sendButton" type="button">
+        ➤
+    </button>
+
+</div>
+
+<div id="uploadStatus" role="status"></div>
+
 
             </main>
 
